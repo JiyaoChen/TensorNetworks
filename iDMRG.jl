@@ -84,8 +84,6 @@ function iDMRG(bondDim::Int64,numSteps::Int64)
             thetaInit = reshape(thetaInit,(chia*d*d*chic));
             thetaInit = thetaInit ./ sqrt(abs(dot(thetaInit,thetaInit)));
 
-            print(thetaInit)
-
             # store previous eivenvalue
             prevEigenVal = eigenVal;
             prevEigenVec = thetaInit;
