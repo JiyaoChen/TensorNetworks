@@ -9,7 +9,7 @@ function iDMRG(bondDim::Int64,numSteps::Int64)
     d = 2;
 
     # set convergence parameters
-    eigsTol = 1e-13;
+    eigsTol = 1e-15;
     convTolE = 1e-12;
     convTolW = 1e-14;
 
