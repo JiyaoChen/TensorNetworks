@@ -10,17 +10,8 @@ module iDMRG
     
     export iDMRG2
 
-    function iDMRG2()
-
-        # set symmetry
-        setSym = "N";
-
-        # parameters Ising model
-        J = 0.0;
-        h = 1.0;
-        maxNumSteps = convert(Int64,1e2);
-        χ = 100;
-        if setSym == "N"
+    function iDMRG2(; J::Float64=4.0, h::Float64=2.0, χ::Int64=64, maxNumSteps::Int64=100, setSym::String="Z2")
+        if setSym == ""
             vP = ℂ^2;
             vV = ℂ^1;
             vL = ℂ^3;
@@ -107,6 +98,8 @@ module iDMRG
                 
                 #  perform SVD and truncate to desired bond dimension
                 U, S, V, ϵ = tsvd(currEigenVec, (2,3), (1,4), trunc = truncdim(χ));
+                # print(S);
+
                 current_χ = dim(space(S,1));
                 V = permute(V, (2, 1), (3, ));
 
