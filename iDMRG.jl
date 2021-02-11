@@ -1,155 +1,137 @@
+module iDMRG
 
-function iDMRG(bondDim::Int64,numSteps::Int64)
+    using KrylovKit
+    using LinearAlgebra
+    using Printf
+    using TensorKit
+    using TensorOperations
+    
+    include("contractions.jl")
+    
+    export iDMRG2
 
-    J = 1;
-    h = 0;
+    function iDMRG2()
 
-    chi = bondDim;
-    maxNumSteps = numSteps;
-    d = 2;
+        # set symmetry
+        setSym = "N";
 
-    # set convergence parameters
-    eigsTol = 1e-15;
-    convTolE = 1e-12;
-    convTolW = 1e-14;
+        # parameters Ising model
+        J = 0.0;
+        h = 1.0;
+        maxNumSteps = convert(Int64,1e2);
+        χ = 100;
+        if setSym == "N"
+            vP = ℂ^2;
+            vV = ℂ^1;
+            vL = ℂ^3;
+            vR = ℂ^3;
+        elseif setSym == "Z2"
+            vP = ℤ₂Space(0 => 1, 1 => 1);
+            vV = ℤ₂Space(0 => 1);
+            vL = ℤ₂Space(0 => 2, 1 => 1);
+            vR = ℤ₂Space(0 => 2, 1 => 1);
+        end
 
-    # Pauli opertators
-    Id = Matrix{ComplexF64}(I,2,2);
-    X = 1/2 * [ 0 +1 ; +1 0 ];
-    Y = 1/2 * [ 0 -1im ; +1im 0 ];
-    Z = 1/2 * [ +1 0 ; 0 -1 ];
+        # Pauli opertators
+        Id = Matrix{ComplexF64}(I,2,2);
+        X = 1/2 * [ 0 +1 ; +1 0 ];
+        Y = 1/2 * [ 0 -1im ; +1im 0 ];
+        Z = 1/2 * [ +1 0 ; 0 -1 ];
 
-    # generate the Heisenberg MPO
-    H_MPO = zeros(Complex{Float64},5,5,2,2);
-    H_MPO[1,1,:,:] = Id;
-    H_MPO[1,2,:,:] = X;
-    H_MPO[1,3,:,:] = Y;
-    H_MPO[1,4,:,:] = Z;
-    H_MPO[1,5,:,:] = -h*Z;
-    H_MPO[2,5,:,:] = J*X;
-    H_MPO[3,5,:,:] = J*Y;
-    H_MPO[4,5,:,:] = J*Z;
-    H_MPO[5,5,:,:] = Id;
-    dMPO = size(H_MPO,1);
+        # generate the Ising MPO
+        ham_arr = zeros(Complex{Float64}, dim(vP), dim(vL), dim(vR), dim(vP));
+        ham_arr[:,1,1,:] = Id;
+        ham_arr[:,2,2,:] = Id;
+        ham_arr[:,1,3,:] = -J*X;
+        ham_arr[:,3,2,:] = X;
+        ham_arr[:,1,2,:] = -h*Z;
+        mpo = TensorMap(ham_arr, vP*vL, vR*vP)
 
-    # generate gammaList
-    gammaList = Array{Array{Float64,3}}(undef,1,2);
-    for i = 1 : size(gammaList,2)
-        gammaList[i] = zeros(d,1,1);
-        gammaList[i][1,1,1] = 1;
-    end
 
-    # generate lambdaList
-    lambdaList = Array{Array{Float64,2}}(undef,1,2)
-    for i = 1 : size(lambdaList,2)
-        lambdaList[i] = ones(Float64,1,1);
-    end
+        # initialize MPS
+        gammaTensor_arr = zeros(ComplexF64, dim(vP), dim(vV), dim(vV));
+        gammaTensor_arr[1,1,1] = 1;
+        gammaTensor = TensorMap(gammaTensor_arr, vP*vV, vV);
+        gammaList = fill(gammaTensor,2);
 
-    # combine the lists to one MPS
-    MPS = [gammaList[1],lambdaList[1],gammaList[2],lambdaList[2]];
+        lambdaTensor_arr = zeros(ComplexF64, dim(vV), dim(vV));
+        lambdaTensor_arr[1,1] = 1;
+        lambdaTensor = TensorMap(lambdaTensor_arr, vV, vV);
+        lambdaList = fill(lambdaTensor,2);
 
-    # initiliaze left and right environment
-    EL = zeros(Float64,1,1,dMPO);
-    EL[1,1,1] = 1;
-    ER = zeros(Float64,1,1,dMPO);
-    ER[1,1,dMPO] = 1;
+        # initiliaze EL and ER
+        EL_arr = zeros(ComplexF64,dim(vV),dim(vL),dim(vV));
+        EL_arr[1,1,1] = 1;
+        EL = TensorMap(EL_arr, vV, vL*vV);
 
-    numElementsGroundStateArray = 5;
-    groundStateEnergy = zeros(Float64,maxNumSteps,numElementsGroundStateArray);
+        ER_arr = zeros(ComplexF64,dim(vR),dim(vV),dim(vV));
+        ER_arr[2,1,1] = 1;
+        ER = TensorMap(ER_arr, vR*vV, vV);
 
-    # initialize variables to be available outside of for-loop
-    eigenVal = 0;
-    prevEigenVal = 0;
-    eigenVec = [];
-    prevEigenVec = [];
-    discardedWeight = 0;
+        groundStateEnergy = zeros(Float64, maxNumSteps, 5);
 
-    for i = 1 : maxNumSteps
+        # initialize variables to be available outside of for-loop
+        ϵ = 0
+        current_χ = 0
+        currEigenVal = 0;
+        currEigenVec = [];
+        prevEigenVal = 0;
+        prevEigenVec = [];
 
-        groundStateEnergy[i,1] = i;
+        for i = 1 : maxNumSteps
 
-        for i_bond = 1 : 2
+            groundStateEnergy[i,1] = i;
 
-            # choose unit cell arrangement
-            ia = mod(i_bond + 0,2) + 1;
-            ib = mod(i_bond + 1,2) + 1;
-            ic = mod(i_bond + 2,2) + 1;
+            for i_bond = 1 : 2
 
-            # get dimensions of tensors to optimize
-            chia = size(gammaList[ib],2);
-            chic = size(gammaList[ic],3);
+                # choose unit cell arrangement
+                ia = mod(i_bond + 0,2) + 1;
+                ib = mod(i_bond + 1,2) + 1;
+                ic = mod(i_bond + 2,2) + 1;
 
-            # construct initial wave function
-            @tensor thetaInit[a,b,c,d] := lambdaList[ia][a,e] * gammaList[ib][b,e,f] * gammaList[ic][c,f,d];
-            thetaInit = reshape(thetaInit,(chia*d*d*chic));
-            thetaInit = thetaInit ./ sqrt(abs(dot(thetaInit,thetaInit)));
+                # construct initial wave function
+                theta = initialWF(lambdaList[ia], gammaList[ib], gammaList[ic]);
+                
+                # store previous eivenvalue
+                prevEigenVal = currEigenVal;
+                prevEigenVec = theta;
+                
+                # optimize wave function
+                eigenVal, eigenVec =
+                    eigsolve(theta,1, :SR, Lanczos()) do x
+                        applyH(x, EL, mpo, ER)
+                    end
+                # eigenVal, eigenVec = eigsolve(x -> applyH(x, EL, mpo, ER), theta, 1, :SR, Lanczos());
+                currEigenVal = eigenVal[1];
+                currEigenVec = eigenVec[1];
+                
+                #  perform SVD and truncate to desired bond dimension
+                U, S, V, ϵ = tsvd(currEigenVec, (2,3), (1,4), trunc = truncdim(χ));
+                current_χ = dim(space(S,1));
+                V = permute(V, (2, 1), (3, ));
 
-            # store previous eivenvalue
-            prevEigenVal = eigenVal;
-            prevEigenVec = thetaInit;
+                # update environments
+                EL = update_EL(EL, U, mpo);
+                ER = update_ER(ER, V, mpo);
 
-            # function to apply the Hamiltonian to the wave function
-            function effectiveHamiltonian_twoSite(src::AbstractVector)
-
-                # reshape vector to tensor
-                src = reshape(src,(chia,d,d,chic));
-
-                # perform two-site update
-                @tensor dest[:] := EL[1,-1,2] * src[1,3,5,7] * H_MPO[2,4,3,-2] * H_MPO[4,6,5,-3] * ER[7,-4,6];
-
-                # return new wavefunction
-                return dest
+                # obtain the new tensors for MPS
+                lambdaList[ib] = S;
+                gammaList[ib] = guess(lambdaList[ia], U, lambdaList[ib]);
+                gammaList[ic] = V;
 
             end
 
-            # optimize wave function
-            D = LinearMap(effectiveHamiltonian_twoSite,chia*d*chic*d);
-            eigenVal , eigenVec = eigs(D,nev = 1,which = :SR,tol = 13-13,v0 = thetaInit);
+            # calculate ground state energy
+            gsEnergy = 1/2*(currEigenVal - prevEigenVal);
 
-            # reshape waveFunc to matrix and perform SVD
-            waveFunc = reshape(eigenVec,(chia*d,d*chic));
-            U,S,V = svd(waveFunc);
-            V = V';
+            # # calculate overlap between old and new wave function
+            # @tensor waveFuncOverlap[:] := currEigenVec[1 2 3] * conj(prevEigenVec[1 2 3]);
 
-            # truncation of the singular values
-    		chib = min(sum(S .> 1e-15),chi);
-    		U = permutedims(reshape(U[1 : size(U,1),1 : chib],(chia,d,chib)),(2,1,3));
-            S = diagm(S);
-            S = S[1 : chib,1 : chib];
-            discardedWeight = abs(1 - tr(S.^2));
-            V = permutedims(reshape(V[1 : chib,1 : size(V,2)],(chib,d,chic)),(2,1,3));
-
-            # update environment
-            @tensor EL[:] := EL[1,4,2] * U[3,1,-1] * H_MPO[2,-3,3,5] * conj(U)[5,4,-2];
-            @tensor ER[:] := ER[1,4,2] * V[3,-1,1] * H_MPO[-3,2,3,5] * conj(V)[5,-2,4];
-
-            # obtain the new tensors for MPS
-            lambdaList[ib] = S ./ sqrt(sum(diag(S.^2)));
-            @tensor gammaList[ib][:] := inv(lambdaList[ia])[-2,1] * U[-1,1,2] * lambdaList[ib][2,-3];
-            gammaList[ic] = V;
+            # print simulation progress
+            @printf("%05i : E_iDMRG / Convergence / Discarded Weight / BondDim : %0.15f / %0.15f / %d \n",i,real(gsEnergy),ϵ,current_χ)
 
         end
 
-        # calculate ground state energy
-        gsenergy = 1/2*(eigenVal - prevEigenVal);
-        gsenergy = gsenergy[1];
-
-        # calculate overlap between old and new wave function
-        overlapTwoSite = prevEigenVec' * eigenVec;
-        overlapTwoSite = overlapTwoSite[1];
-
-        groundStateEnergy[i,2] = real(gsenergy);
-        groundStateEnergy[i,3] = imag(gsenergy);
-        groundStateEnergy[i,4] = overlapTwoSite;
-        groundStateEnergy[i,5] = discardedWeight;
-
-        # print simulation progress
-        @printf("%05i : E_iDMRG / Convergence / Discarded Weight : %0.15f / %0.15f / %0.15f\n",i,real(gsenergy),real(overlapTwoSite[1]),discardedWeight)
-
     end
-
-    MPS = [gammaList[1],lambdaList[1],gammaList[2],lambdaList[2]];
-
-    return MPS , groundStateEnergy
 
 end
