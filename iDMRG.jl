@@ -10,7 +10,7 @@ module iDMRG
     
     export iDMRG2
 
-    function iDMRG2(; J::Float64=4.0, h::Float64=2.0, χ::Int64=64, maxNumSteps::Int64=100, setSym::String="Z2")
+    function iDMRG2(; J::Float64=4.0, h::Float64=2.0, χ::Int64=64, maxNumSteps::Int64=100, setSym::String="Z2", tol::Float64=KrylovDefaults.tol)
         if setSym == ""
             vP = ℂ^2;
             vV = ℂ^1;
@@ -89,7 +89,7 @@ module iDMRG
                 
                 # optimize wave function
                 eigenVal, eigenVec =
-                    eigsolve(theta,1, :SR, Lanczos()) do x
+                    eigsolve(theta,1, :SR, Arnoldi(tol=tol)) do x
                         applyH(x, EL, mpo, ER)
                     end
                 # eigenVal, eigenVec = eigsolve(x -> applyH(x, EL, mpo, ER), theta, 1, :SR, Lanczos());
@@ -109,7 +109,7 @@ module iDMRG
 
                 # obtain the new tensors for MPS
                 lambdaList[ib] = S;
-                gammaList[ib] = guess(lambdaList[ia], U, lambdaList[ib]);
+                gammaList[ib] = new_gamma(lambdaList[ia], U, lambdaList[ib]);
                 gammaList[ic] = V;
 
             end

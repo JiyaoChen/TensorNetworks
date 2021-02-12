@@ -4,7 +4,7 @@ function initialWF(L, G1, G2)
     return Y
 end
 # 
-function guess(L1, U, L2)
+function new_gamma(L1, U, L2)
     @tensor Y[-1 -2; -3] := inv(L1)[-2 1] * U[-1 1 2] * L2[2 -3];
     return Y
 end
