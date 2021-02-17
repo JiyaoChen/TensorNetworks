@@ -5,7 +5,7 @@ function initialWF(L, G1, G2)
 end
 # 
 function new_gamma(L1, U, L2)
-    @tensor Y[-1 -2; -3] := inv(L1)[-2 1] * U[-1 1 2] * L2[2 -3];
+    @tensor Y[-1 -2; -3] := pinv(L1)[-2 1] * U[-1 1 2] * L2[2 -3];
     return Y
 end
 # 
