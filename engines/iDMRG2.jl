@@ -3,16 +3,21 @@ include("iDMRG2_contractions.jl")
 
 # traditional growing algorithm -- starts from scratch with a given mpo tensor and variationally searches for the (2-site periodic) MPS
 function iDMRG2(mpo::A; χ::Int64=64, steps::Int64=100, tol::Float64=KrylovDefaults.tol) where {A<:AbstractTensorMap{S,2,2} where {S<:EuclideanSpace}}
+    
     # this extracts the link spaces from the MPO tensor legs
     vP = space(mpo)[1]
     vL = space(mpo)[2]
     # this is an outgoing leg so it must be conjugated for further purposes
-    vR = conj(space(mpo)[3])
+    vR = space(mpo)[3]'
+
     # initial legs of the MPS (currently only ℤ₂ and ℂ, needs further adaption)
-    if typeof(vP) <: GradedSpace
-        vV = typeof(space(mpo)[1])(0=>1)
-    elseif typeof(vP) <: CartesianSpace
-        vV = typeof(space(mpo)[1])(1)
+
+    if occursin("ComplexSpace",string(typeof(vP)))
+        vV = ℂ^1
+    elseif occursin("ZNIrrep{2}",string(typeof(vP)))
+        vV =  ℤ₂Space(0 => 1, 1 => 1)
+    elseif  occursin("SU2Irrep",string(typeof(vP)))
+        vV = SU₂Space(0 => 1, 1/2 => 1)
     end
 
     # initialize MPS tensors
