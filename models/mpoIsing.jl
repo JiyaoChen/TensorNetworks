@@ -1,4 +1,4 @@
-function mpoIsing(; J::Float64 = 1.0, h::Float64 = 0.4, setSym::String = "Z2")
+function mpoIsing(; J::Float64 = 4.0, h::Float64 = 2.0, setSym::String = "Z2")
 
     # set vector spaces
     if setSym == ""

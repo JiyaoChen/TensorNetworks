@@ -7,6 +7,7 @@ end
 
 # constructor for initialization with tensor train
 function MPS(site_tensors::Vector{A}) where {A<:AbstractTensorMap{S,2,1} where {S<:EuclideanSpace}}
+
     for i in length(site_tensors) : -1 : 2
         (L, Q) = rightorth(site_tensors[i],(2,),(1,3),alg=LQpos())
         site_tensors[i] = permute(Q,(2,1),(3,))
