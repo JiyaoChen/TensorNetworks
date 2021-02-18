@@ -29,27 +29,29 @@ function iDMRG2(mpo::A; χ::Int64=64, numSteps::Int64=100, tol::Float64=KrylovDe
     mpoSpaceO = zeroIrrep
     mpsSpaceShared = computeSharedLink(mpsSpaceL, physSpace, physSpace, mpsSpaceR)
     
-    # mpoBoundaryVecL = zeros(ComplexF64, dim(mpoSpaceI),dim(mpoSpaceL))
-    # mpoBoundaryVecL[1] = 1
+    mpoBoundaryVecL = zeros(ComplexF64, dim(mpoSpaceI),dim(mpoSpaceL))
+    mpoBoundaryVecL[1] = 1
     # mpoBoundaryVecL = Array{ComplexF64}([1.0 0.0]);
-    # mpoBoundaryVecR = zeros(ComplexF64, dim(mpoSpaceR),dim(mpoSpaceO))
-    # mpoBoundaryVecR[2] = 1
+    mpoBoundaryVecR = zeros(ComplexF64, dim(mpoSpaceR),dim(mpoSpaceO))
+    mpoBoundaryVecR[2] = 1
     # mpoBoundaryVecR = Array{ComplexF64}([0.0 ; 1.0]);
+    mpoBoundaryTensL = TensorMap(mpoBoundaryVecL, mpoSpaceI, mpoSpaceL)
+    mpoBoundaryTensR = TensorMap(mpoBoundaryVecR, mpoSpaceR, mpoSpaceO)
 
     # mpoBoundaryTensL = TensorMap(reshape([1 0], (1 1 2)), mpoSpaceI*mpoSpaceL, zeroIrrep)
-    mpoBoundaryTensL = TensorMap(zeros, mpoSpaceI, mpoSpaceL)
-    tensorDictL = convert(Dict, mpoBoundaryTensL)
-    dataDictL = tensorDictL[:data]
-    dataDictL["Irrep[SU₂](0)"] = Array{ComplexF64}([1.0 0.0])
-    tensorDictL[:data] = dataDictL
-    mpoBoundaryTensL = convert(TensorMap, tensorDictL)
+    # mpoBoundaryTensL = TensorMap(zeros, mpoSpaceI, mpoSpaceL)
+    # tensorDictL = convert(Dict, mpoBoundaryTensL)
+    # dataDictL = tensorDictL[:data]
+    # dataDictL["Irrep[SU₂](0)"] = Array{ComplexF64}([1.0 0.0])
+    # tensorDictL[:data] = dataDictL
+    # mpoBoundaryTensL = convert(TensorMap, tensorDictL)
 
-    mpoBoundaryTensR = TensorMap(zeros, mpoSpaceR, mpoSpaceO)
-    tensorDictR = convert(Dict, mpoBoundaryTensR)
-    dataDictR = tensorDictR[:data]
-    dataDictR["Irrep[SU₂](0)"] = Array{ComplexF64}(reshape([0.0 ; 1.0], (2,1)))
-    tensorDictR[:data] = dataDictR
-    mpoBoundaryTensR = convert(TensorMap, tensorDictR)
+    # mpoBoundaryTensR = TensorMap(zeros, mpoSpaceR, mpoSpaceO)
+    # tensorDictR = convert(Dict, mpoBoundaryTensR)
+    # dataDictR = tensorDictR[:data]
+    # dataDictR["Irrep[SU₂](0)"] = Array{ComplexF64}(reshape([0.0 ; 1.0], (2,1)))
+    # tensorDictR[:data] = dataDictR
+    # mpoBoundaryTensR = convert(TensorMap, tensorDictR)
     # mpoBoundaryTensL = reshape(mpoBoundaryTensL, dim())
     # mpoBoundaryTensL = TensorMap(mpoBoundaryTensL, space(mpoBoundaryTensL, 1), space(mpoBoundaryTensL, 2))
     # mpoBoundaryTensR = Tensor([0 1], mpoSpaceR*mpoSpaceO)
