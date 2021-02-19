@@ -43,9 +43,7 @@ function mpoHeisenberg(;J::Float64 = 1.0, spinS::Float64 = 1/2, setSym = "")
         tensorDict = convert(Dict, mpo);
         dictKeys = keys(tensorDict);
         dataDict = tensorDict[:data];
-        # dataDict["Irrep[SU₂](1/2)"] = [1.0 + 0.0im 0.0 + 0.0im γ + 0.0im ; 0.0 + 0.0im 1.0 + 0.0im 0.0 + 0.0im ; 0.0 + 0.0im γ + 0.0im 0.0 + 0.0im];
         dataDict["Irrep[SU₂](1/2)"] = Array{ComplexF64}([1.0 0.0 J * γ ; 0.0 1.0 0.0 ; 0.0 γ 0.0])
-        # dataDict["Irrep[SU₂](1/2)"] = Array{ComplexF64}([1 2 3 ; 4 5 6 ; 7 8 9])
         tensorDict[:data] = dataDict;
         mpo = convert(TensorMap, tensorDict);
 
