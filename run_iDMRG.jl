@@ -5,7 +5,6 @@ using DMRG_engine
 using DMRG_types
 using TensorKit
 using LinearAlgebra
-using Combinatorics
 
 # include models
 include("getSpinOperators.jl")
