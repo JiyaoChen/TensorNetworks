@@ -74,6 +74,10 @@ function iDMRG2(mpo::A; χ::Int64=64, numSteps::Int64=100, tol::Float64=KrylovDe
     IdR = TensorMap(ones, ComplexF64, mpsSpaceR ⊗ mpoSpaceO, mpsSpaceR)
     @tensor EL[-1 -2 ; -3] := IdL[-1 1 -3] * mpoBoundaryTensL[1 -2]
     @tensor ER[-1 ; -2 -3] := mpoBoundaryTensR[-2 1] * IdR[-1 1 -3]
+
+    test = shiftVirtSpaceMPS(T1, U1Space(1 => 5))
+    
+    return
     
     # initialize array to store energy
     groundStateEnergy = zeros(Float64, numSteps, 5)
