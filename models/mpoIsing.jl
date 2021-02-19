@@ -14,13 +14,13 @@ function mpoIsing(; J::Float64 = 4.0, h::Float64 = 2.0, setSym::String = "Z2")
     Sx, Sy, Sz, Id = getSpinOperators(1/2);
 
     # generate the Ising MPO
-    ham_arr = zeros(ComplexF64, dim(vP), dim(vM), dim(vM), dim(vP));
-    ham_arr[:,1,1,:] = Id;
-    ham_arr[:,2,2,:] = Id;
-    ham_arr[:,1,3,:] = -J * Sx;
-    ham_arr[:,3,2,:] = Sx;
-    ham_arr[:,1,2,:] = -h * Sz;
-    mpo = TensorMap(ham_arr, vP ⊗ vM, vM ⊗ vP)
+    ham_arr = zeros(ComplexF64, dim(vM), dim(vP), dim(vM), dim(vP));
+    ham_arr[1,:,1,:] = Id;
+    ham_arr[2,:,2,:] = Id;
+    ham_arr[1,:,3,:] = J * Sx;
+    ham_arr[3,:,2,:] = Sx;
+    ham_arr[1,:,2,:] = h * Sz;
+    mpo = TensorMap(ham_arr, vM ⊗ vP, vM ⊗ vP)
 
     # function return
     return mpo

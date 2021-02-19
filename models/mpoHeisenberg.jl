@@ -12,32 +12,48 @@ function mpoHeisenberg(;J::Float64 = 1.0, spinS::Float64 = 1/2, setSym = "")
         Sx, Sy, Sz, Id = getSpinOperators(spinS);
 
         # generate the Heisenberg MPO
-        ham_arr = zeros(ComplexF64, dim(vP), dim(vM), dim(vM), dim(vP));
-        ham_arr[:,1,1,:] = Id;
-        ham_arr[:,2,2,:] = Id;
-        ham_arr[:,1,3,:] = J * Sx;
-        ham_arr[:,1,4,:] = J * Sy;
-        ham_arr[:,1,5,:] = J * Sz;
-        ham_arr[:,3,2,:] = Sx;
-        ham_arr[:,4,2,:] = Sy;
-        ham_arr[:,5,2,:] = Sz;
+        ham_arr = zeros(ComplexF64, dim(vM), dim(vP), dim(vM), dim(vP));
+        ham_arr[1,:,1,:] = Id;
+        ham_arr[2,:,2,:] = Id;
+        ham_arr[1,:,3,:] = J * Sx;
+        ham_arr[1,:,4,:] = J * Sy;
+        ham_arr[1,:,5,:] = J * Sz;
+        ham_arr[3,:,2,:] = Sx;
+        ham_arr[4,:,2,:] = Sy;
+        ham_arr[5,:,2,:] = Sz;
         
-        mpo = TensorMap(ham_arr, vP ⊗ vM, vM ⊗ vP)
+        mpo = TensorMap(ham_arr, vM ⊗ vP, vM ⊗ vP)
 
     elseif setSym == "U1"
 
-        # TODO
-
-    elseif setSym == "SU2"
-
         # set vector spaces
+        vP = U1Space(0 => 1, 1 => 1)
+        vM = U1Space(0 => 3, -1 => 1, +1 => 1)
+
+        # get spin operators
+        Sx, Sy, Sz, Id, Sm, Sp = getSpinOperators(spinS)
+        ham_arr = zeros(ComplexF64, dim(vM), dim(vP), dim(vM), dim(vP))
+        ham_arr[1,:,1,:] = Id
+        ham_arr[2,:,2,:] = Id
+        ham_arr[1,:,4,:] = 0.5 * J * Sm
+        ham_arr[1,:,5,:] = 0.5 * J * Sp
+        ham_arr[1,:,3,:] = J * Sz
+        ham_arr[4,:,2,:] = Sp
+        ham_arr[5,:,2,:] = Sm
+        ham_arr[3,:,2,:] = Sz
+
+        mpo = TensorMap(ham_arr, vM ⊗ vP, vM ⊗ vP)
+        
+    elseif setSym == "SU2"
+        # TODO: adapt to new notation -- we need the conjugate entries of the tensor elements, right???
+        # set vector spaces 
         vP = SU₂Space(spinS => 1);
         mpoSpaceL = SU₂Space(0 => 2, 1 => 1);
         mpoSpaceR = SU₂Space(0 => 2, 1 => 1);
-        γ = 1im * sqrt(spinS * (spinS + 1));
+        γ = 1im * sqrt(spinS * (spinS + 1));  # TODO: missing (-1)?
 
         # construct empty MPO
-        mpo = TensorMap(zeros, ComplexF64, vP ⊗ mpoSpaceL, mpoSpaceR ⊗ vP)
+        mpo = TensorMap(zeros, ComplexF64, mpoSpaceL ⊗ vP, mpoSpaceR ⊗ vP)
 
         # fill tensor blocks
         tensorDict = convert(Dict, mpo);

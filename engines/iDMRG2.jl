@@ -10,16 +10,17 @@ function iDMRG2(mpo::A; χ::Int64=64, numSteps::Int64=100, tol::Float64=KrylovDe
     # mpo = TensorMap(mpo_arr, ComplexSpace(2)*ComplexSpace(5), ComplexSpace(5)*ComplexSpace(2))
     
     # this extracts the link spaces from the MPO tensor legs
-    physSpace = space(mpo)[1]
-    mpoSpaceL = space(mpo)[2]
-    # this is an outgoing leg so it must be conjugated for further purposes
-    mpoSpaceR = space(mpo)[3]'
+    physSpace = space(mpo)[2]
+    mpoSpaceL = space(mpo)[3]'  # this is an incoming leg so it must be conjugated
+    mpoSpaceR = space(mpo)[1]
 
     # initial legs of the MPS (currently only ℤ₂ and ℂ, needs further adaption)
     if occursin("ComplexSpace",string(typeof(physSpace)))
         zeroIrrep = ℂ^1
     elseif occursin("ZNIrrep{2}",string(typeof(physSpace)))
         zeroIrrep = ℤ₂Space(0 => 1)
+    elseif occursin("U1Irrep",string(typeof(physSpace)))
+        zeroIrrep = U1Space(0 => 1)
     elseif  occursin("SU2Irrep",string(typeof(physSpace)))
         zeroIrrep = SU₂Space(0 => 1)
     end
@@ -29,10 +30,10 @@ function iDMRG2(mpo::A; χ::Int64=64, numSteps::Int64=100, tol::Float64=KrylovDe
     mpoSpaceO = zeroIrrep
     mpsSpaceShared = computeSharedLink(mpsSpaceL, physSpace, physSpace, mpsSpaceR)
     
-    mpoBoundaryVecL = zeros(ComplexF64, dim(mpoSpaceI),dim(mpoSpaceL))
+    mpoBoundaryVecL = zeros(ComplexF64, dim(mpoSpaceL), dim(mpoSpaceI))
     mpoBoundaryVecL[1] = 1
     # mpoBoundaryVecL = Array{ComplexF64}([1.0 0.0]);
-    mpoBoundaryVecR = zeros(ComplexF64, dim(mpoSpaceR),dim(mpoSpaceO))
+    mpoBoundaryVecR = zeros(ComplexF64, dim(mpoSpaceO), dim(mpoSpaceR))
     mpoBoundaryVecR[2] = 1
     # mpoBoundaryVecR = Array{ComplexF64}([0.0 ; 1.0]);
     mpoBoundaryTensL = TensorMap(mpoBoundaryVecL, mpoSpaceI, mpoSpaceL)
@@ -59,20 +60,20 @@ function iDMRG2(mpo::A; χ::Int64=64, numSteps::Int64=100, tol::Float64=KrylovDe
     # println(mpoBoundaryTensL)
 
     # initialize MPS tensors
-    T1 = TensorMap(randn, ComplexF64, physSpace*mpsSpaceL, mpsSpaceShared)
-    T2 = TensorMap(randn, ComplexF64, physSpace*mpsSpaceShared, mpsSpaceR)
-    # println(T1)
-    # println(T2)
+    T1 = TensorMap(randn, ComplexF64, mpsSpaceL ⊗ physSpace, mpsSpaceShared)
+    T2 = TensorMap(randn, ComplexF64, mpsSpaceShared ⊗ physSpace, mpsSpaceR)
+
+    # U, Spr, Vdag, ϵ = tsvd(T1*permute(T2, (1,), (2,3)), (1,2), (3,4), trunc = truncdim(χ))
+    # print(T1)
+    # println(U)
+    # print(T2)
+    # print(permute(Vdag, (1,2), (3,)))
 
     # initiliaze EL and ER
-    IdL = TensorMap(ones, ComplexF64, mpsSpaceL, mpoSpaceI*mpsSpaceL)
-    IdR = TensorMap(ones, ComplexF64, mpoSpaceO*mpsSpaceR, mpsSpaceR)
-    @tensor EL[-1 ; -2 -3] := IdL[-1 1 -3] * mpoBoundaryTensL[1 -2]
-    @tensor ER[-1 -2 ; -3] := mpoBoundaryTensR[-1 1] * IdR[1 -2 -3]
-    @tensor energy[:] := EL[1 2 3] * ER[2 3 1]
-    # println(energy)
-    # println(EL)
-    # println(ER)
+    IdL = TensorMap(ones, ComplexF64, mpsSpaceL, mpoSpaceI ⊗ mpsSpaceL)
+    IdR = TensorMap(ones, ComplexF64, mpsSpaceR ⊗ mpoSpaceO, mpsSpaceR)
+    @tensor EL[-1 -2 ; -3] := IdL[-1 1 -3] * mpoBoundaryTensL[1 -2]
+    @tensor ER[-1 ; -2 -3] := mpoBoundaryTensR[-2 1] * IdR[-1 1 -3]
     
     # initialize array to store energy
     groundStateEnergy = zeros(Float64, numSteps, 5)
@@ -93,7 +94,7 @@ function iDMRG2(mpo::A; χ::Int64=64, numSteps::Int64=100, tol::Float64=KrylovDe
 
     
     # construct and SVD initial wave function
-    theta = initialWF(T1, T2)
+    theta = permute(T1 * permute(T2, (1,), (2,3)), (1,2,3), (4,))
     # U, S, Vdag, ϵ = tsvd(theta, (2,3), (1,4), trunc = truncdim(χ))
     # Vdag = permute(Vdag, (2,1), (3,))
     # @tensor theta[-1 -2 -3; -4] = U[-2 -3 1] * S[1 2] * Vdag[-1 1 -4]
@@ -113,15 +114,16 @@ function iDMRG2(mpo::A; χ::Int64=64, numSteps::Int64=100, tol::Float64=KrylovDe
             eigsolve(theta,1, :SR, Arnoldi(tol=tol)) do x
                 applyH(x, EL, mpo, ER)
             end
+        # println(eigenVal)
         currEigenVal = eigenVal[1]
         currEigenVec = eigenVec[1]
         
         #  perform SVD and truncate to desired bond dimension
         S = Spr
-        U, Spr, Vdag, ϵ = tsvd(currEigenVec, (2,3), (1,4), trunc = truncdim(χ))
+        U, Spr, Vdag, ϵ = tsvd(currEigenVec, (1,2), (3,4), trunc = truncdim(χ))
 
         current_χ = dim(space(Spr,1))
-        Vdag = permute(Vdag, (2,1), (3,))
+        Vdag = permute(Vdag, (1,2), (3,))
 
         # update environments
         EL = update_EL(EL, U, mpo)
@@ -132,7 +134,7 @@ function iDMRG2(mpo::A; χ::Int64=64, numSteps::Int64=100, tol::Float64=KrylovDe
         # tensorTrain[end-2*(i-1)-i_bond+1] = V
 
         # obtain the new tensors for MPS
-        theta = guess(Spr, Vdag, S, U)
+        theta = newGuess(Spr, Vdag, S, U)
 
         # calculate ground state energy
         gsEnergy = 1/2*(currEigenVal - prevEigenVal)
