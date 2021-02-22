@@ -17,7 +17,7 @@ Base.run(`clear`)
 # simulation parameters
 χ = 100
 tol = 1e-16
-numSteps = 100
+numSteps = 50
 
 # choose model
 setModel = 2
@@ -30,8 +30,8 @@ if setModel == 1
 elseif setModel == 2
     setSym = ""
     setSym = "U1"
-    # setSym = "SU2"  ## TODO I removed this case in the MPO for now due to some weird issue with the debugger...
-    J = 1.0
+    setSym = "SU2"  ## TODO I removed this case in the MPO for now due to some weird issue with the debugger...
+    J = -1.0
     spinS = 1/2
     mpo = mpoHeisenberg(J = J, spinS = spinS, setSym = setSym)
 end

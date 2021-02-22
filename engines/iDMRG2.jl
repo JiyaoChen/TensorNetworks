@@ -19,13 +19,16 @@ function iDMRG2(mpo::A; χ::Int64=64, numSteps::Int64=100, tol::Float64=KrylovDe
         zeroIrrep = ℂ^1
     elseif occursin("ZNIrrep{2}",string(typeof(physSpace)))
         zeroIrrep = ℤ₂Space(0 => 1)
+        oneIrrep = ℤ₂Space(0 => 1)
     elseif occursin("U1Irrep",string(typeof(physSpace)))
         zeroIrrep = U1Space(0 => 1)
+        oneIrrep = U1Space(1 => 1)
     elseif  occursin("SU2Irrep",string(typeof(physSpace)))
         zeroIrrep = SU₂Space(0 => 1)
+        oneIrrep = SU₂Space(0 => 1)
     end
     mpsSpaceL = zeroIrrep
-    mpsSpaceR = zeroIrrep
+    mpsSpaceR = oneIrrep
     mpoSpaceI = zeroIrrep
     mpoSpaceO = zeroIrrep
     mpsSpaceShared = computeSharedLink(mpsSpaceL, physSpace, physSpace, mpsSpaceR)
@@ -72,12 +75,11 @@ function iDMRG2(mpo::A; χ::Int64=64, numSteps::Int64=100, tol::Float64=KrylovDe
     # initiliaze EL and ER
     IdL = TensorMap(ones, ComplexF64, mpsSpaceL, mpoSpaceI ⊗ mpsSpaceL)
     IdR = TensorMap(ones, ComplexF64, mpsSpaceR ⊗ mpoSpaceO, mpsSpaceR)
-    @tensor EL[-1 -2 ; -3] := IdL[-1 1 -3] * mpoBoundaryTensL[1 -2]
-    @tensor ER[-1 ; -2 -3] := mpoBoundaryTensR[-2 1] * IdR[-1 1 -3]
+    @tensor EL[-1; -2 -3] := IdL[-1 1 -3] * mpoBoundaryTensL[1 -2]
+    @tensor ER[-1 -2; -3] := mpoBoundaryTensR[-2 1] * IdR[-1 1 -3]
 
-    test = shiftVirtSpaceMPS(T1, U1Space(1 => 5))
     
-    return
+    # return
     
     # initialize array to store energy
     groundStateEnergy = zeros(Float64, numSteps, 5)
@@ -97,12 +99,8 @@ function iDMRG2(mpo::A; χ::Int64=64, numSteps::Int64=100, tol::Float64=KrylovDe
     # tensorTrain = {}
 
     
-    # construct and SVD initial wave function
+    # construct initial wave function
     theta = permute(T1 * permute(T2, (1,), (2,3)), (1,2,3), (4,))
-    # U, S, Vdag, ϵ = tsvd(theta, (2,3), (1,4), trunc = truncdim(χ))
-    # Vdag = permute(Vdag, (2,1), (3,))
-    # @tensor theta[-1 -2 -3; -4] = U[-2 -3 1] * S[1 2] * Vdag[-1 1 -4]
-    # theta = normalize!(theta)
     Spr = TensorMap(ones, zeroIrrep, zeroIrrep);
     
     # main growing loop
@@ -133,12 +131,17 @@ function iDMRG2(mpo::A; χ::Int64=64, numSteps::Int64=100, tol::Float64=KrylovDe
         EL = update_EL(EL, U, mpo)
         ER = update_ER(ER, Vdag, mpo)
 
+        # shift quantum numbers
+        ER = shiftVirtSpaceMPS(ER, oneIrrep)
+
         # save the tensors
         # tensorTrain[2*(i-1)+i_bond] = U
         # tensorTrain[end-2*(i-1)-i_bond+1] = V
 
         # obtain the new tensors for MPS
-        theta = newGuess(Spr, Vdag, S, U)
+        theta = newGuess(oneIrrep, Spr, Vdag, S, U)
+        # theta_shifted = TensorMap(convert(Array, theta), space(EL)[3]' ⊗ space(theta)[2] ⊗ space(theta)[3], space(ER)[1]')
+        # print(theta_shifted)
 
         # calculate ground state energy
         gsEnergy = 1/2*(currEigenVal - prevEigenVal)
@@ -156,7 +159,7 @@ function iDMRG2(mpo::A; χ::Int64=64, numSteps::Int64=100, tol::Float64=KrylovDe
 
     # mps = DMRG_types.MPS([tensor for tensor in tensorTrain]);
 
-    print(dim(Spr))
+    print(space(Spr),"\n")
 
     return
     
