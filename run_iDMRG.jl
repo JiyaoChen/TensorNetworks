@@ -17,7 +17,7 @@ Base.run(`clear`)
 # simulation parameters
 χ = 100
 tol = 1e-16
-numSteps = 50
+numSteps = 10
 
 # choose model
 setModel = 2

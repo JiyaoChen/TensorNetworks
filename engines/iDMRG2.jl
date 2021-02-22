@@ -25,7 +25,7 @@ function iDMRG2(mpo::A; χ::Int64=64, numSteps::Int64=100, tol::Float64=KrylovDe
         oneIrrep = U1Space(1 => 1)
     elseif  occursin("SU2Irrep",string(typeof(physSpace)))
         zeroIrrep = SU₂Space(0 => 1)
-        oneIrrep = SU₂Space(0 => 1)
+        oneIrrep = SU₂Space(1 => 1)
     end
     mpsSpaceL = zeroIrrep
     mpsSpaceR = oneIrrep
@@ -123,9 +123,15 @@ function iDMRG2(mpo::A; χ::Int64=64, numSteps::Int64=100, tol::Float64=KrylovDe
         #  perform SVD and truncate to desired bond dimension
         S = Spr
         U, Spr, Vdag, ϵ = tsvd(currEigenVec, (1,2), (3,4), trunc = truncdim(χ))
+        print(space(Vdag,3)',"\n")
 
         current_χ = dim(space(Spr,1))
         Vdag = permute(Vdag, (1,2), (3,))
+
+        # isometryL = TensorKit.isometry(SU2Space((i+1)/2 => 1), space(ER)[1])
+        # isometryR = TensorKit.isometry(space(Vdag)[3]', SU2Space((i+1)/2 => 1))
+        # Vdag = Vdag * isometryR * isometryL
+        # print(space(Vdag,3)',"\n")
 
         # update environments
         EL = update_EL(EL, U, mpo)
