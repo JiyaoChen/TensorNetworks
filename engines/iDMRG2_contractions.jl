@@ -3,10 +3,11 @@ function newGuess(Spr, Vdag, S, U)
     return Y
 end
 
-function newGuess(vecSpace, Spr, Vdag, S, U)
+function newGuess(shiftIrrep, maxIrrepL, maxIrrepR, Spr, Vdag, S, U)
     @tensor rPart[-1 -2; -3] := pinv(S)[-1 1] * U[1 -2 2] * Spr[2 -3]
-    rPart = shiftVirtSpaceMPS(rPart, vecSpace)
-    @tensor Y[-1 -2 -3; -4] := Spr[-1 1] * Vdag[1 -2 2] * rPart[2 -3 -4]
+    rPart = shiftVirtSpaceMPS(rPart, shiftIrrep, maxIrrepL, maxIrrepR)
+    @tensor Y[-1 -2 -3; -4] := Spr[-1 1] * Vdag[1 -2 2] * rPart[2 -3 -4];
+    # @tensor Y[-1 -2 -3; -4] := Spr[-1 1] * Vdag[1 -2 2] * pinv(S)[2 3] * U[3 -2 4] * Spr[4 -3]
     return Y
 end
  

@@ -41,7 +41,6 @@ function iDMRG2(mpo::A; χ::Int64=64, numSteps::Int64=100, tol::Float64=KrylovDe
     # mpoBoundaryVecR = Array{ComplexF64}([0.0 ; 1.0]);
     mpoBoundaryTensL = TensorMap(mpoBoundaryVecL, mpoSpaceI, mpoSpaceL)
     mpoBoundaryTensR = TensorMap(mpoBoundaryVecR, mpoSpaceR, mpoSpaceO)
-
     # mpoBoundaryTensL = TensorMap(reshape([1 0], (1 1 2)), mpoSpaceI*mpoSpaceL, zeroIrrep)
     # mpoBoundaryTensL = TensorMap(zeros, mpoSpaceI, mpoSpaceL)
     # tensorDictL = convert(Dict, mpoBoundaryTensL)
@@ -102,6 +101,7 @@ function iDMRG2(mpo::A; χ::Int64=64, numSteps::Int64=100, tol::Float64=KrylovDe
     # construct initial wave function
     theta = permute(T1 * permute(T2, (1,), (2,3)), (1,2,3), (4,))
     Spr = TensorMap(ones, zeroIrrep, zeroIrrep);
+    # print("new guess spaces: ",space(theta),"\n")
     
     # main growing loop
     for i = 1 : numSteps
@@ -110,44 +110,49 @@ function iDMRG2(mpo::A; χ::Int64=64, numSteps::Int64=100, tol::Float64=KrylovDe
         
         # store previous eivenvalue
         prevEigenVal = currEigenVal;
+
+        # print theta spaces
+        # print("new guess spaces: ",space(theta),"\n")
         
         # optimize wave function
         eigenVal, eigenVec = 
             eigsolve(theta,1, :SR, Arnoldi(tol=tol)) do x
                 applyH(x, EL, mpo, ER)
             end
-        # println(eigenVal)
         currEigenVal = eigenVal[1]
         currEigenVec = eigenVec[1]
         
         #  perform SVD and truncate to desired bond dimension
         S = Spr
         U, Spr, Vdag, ϵ = tsvd(currEigenVec, (1,2), (3,4), trunc = truncdim(χ))
-        print(space(Vdag,3)',"\n")
+        # U, Spr, Vdag, ϵ = tsvd(currEigenVec, (1,2), (3,4))
+        # print("spaces Spr: ",space(Spr),"\n")
+        # print("spaces Vdag: ",space(Vdag),"\n")
 
         current_χ = dim(space(Spr,1))
         Vdag = permute(Vdag, (1,2), (3,))
 
-        # isometryL = TensorKit.isometry(SU2Space((i+1)/2 => 1), space(ER)[1])
-        # isometryR = TensorKit.isometry(space(Vdag)[3]', SU2Space((i+1)/2 => 1))
-        # Vdag = Vdag * isometryR * isometryL
-        # print(space(Vdag,3)',"\n")
-
         # update environments
         EL = update_EL(EL, U, mpo)
+
         ER = update_ER(ER, Vdag, mpo)
+        # print("spaces ER: ",space(ER),"\n")
 
         # shift quantum numbers
-        ER = shiftVirtSpaceMPS(ER, oneIrrep)
+        # maxIrrepL = SU2Space((i + 1)/2 => 1)
+        # maxIrrepR = SU2Space((i + 2)/2 => 1)
+        # maxIrrepL = SU2Space((i + 1)/2 => 1)
+        maxIrrepR = U1Space((i+1) => 1)
+        ER = shiftVirtSpaceEnv(ER, oneIrrep, maxIrrepR)
+        # ER = shiftVirtSpaceMPS(ER, oneIrrep)
 
         # save the tensors
         # tensorTrain[2*(i-1)+i_bond] = U
         # tensorTrain[end-2*(i-1)-i_bond+1] = V
 
         # obtain the new tensors for MPS
-        theta = newGuess(oneIrrep, Spr, Vdag, S, U)
-        # theta_shifted = TensorMap(convert(Array, theta), space(EL)[3]' ⊗ space(theta)[2] ⊗ space(theta)[3], space(ER)[1]')
-        # print(theta_shifted)
+        # theta = newGuess(oneIrrep, maxIrrepL, maxIrrepR, Spr, Vdag, S, U)
+        theta = TensorMap(randn, space(EL,3)' ⊗ space(theta, 2) ⊗ space(theta, 3), space(ER, 1))
 
         # calculate ground state energy
         gsEnergy = 1/2*(currEigenVal - prevEigenVal)
@@ -165,7 +170,8 @@ function iDMRG2(mpo::A; χ::Int64=64, numSteps::Int64=100, tol::Float64=KrylovDe
 
     # mps = DMRG_types.MPS([tensor for tensor in tensorTrain]);
 
-    print(space(Spr),"\n")
+    print("spaces Spr: ",space(Spr),"\n")
+    print("spaces ER: ",space(ER),"\n")
 
     return
     

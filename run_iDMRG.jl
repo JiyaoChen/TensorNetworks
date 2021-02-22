@@ -30,7 +30,7 @@ if setModel == 1
 elseif setModel == 2
     setSym = ""
     setSym = "U1"
-    setSym = "SU2"  ## TODO I removed this case in the MPO for now due to some weird issue with the debugger...
+    # setSym = "SU2"
     J = -1.0
     spinS = 1/2
     mpo = mpoHeisenberg(J = J, spinS = spinS, setSym = setSym)
@@ -41,6 +41,7 @@ end
 
 # @time DMRG_engine.iDMRG2(χ=χ, maxNumSteps=100, setSym="Z2", tol=tol)
 # @time DMRG_engine.iDMRG2(χ=χ, maxNumSteps=6, setSym="")
+
 
 # length = 10
 # mps_arr = Vector([tens for tens in psi for i in 1:length/2])
