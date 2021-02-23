@@ -4,7 +4,10 @@ include("iDMRG2_link_manipulations.jl")
 using DMRG_types
 
 # traditional growing algorithm -- starts from scratch with a given mpo tensor and variationally searches for the (2-site periodic) MPS
-function iDMRG2(mpo::A; χ::Int64=64, numSteps::Int64=100, tol::Float64=KrylovDefaults.tol) where {A<:AbstractTensorMap{S,2,2} where {S<:EuclideanSpace}}
+function iDMRG2(mpo::A; χ::Int64=64, size::Int64=100, tol::Float64=KrylovDefaults.tol) where {A<:AbstractTensorMap{S,2,2} where {S<:EuclideanSpace}}
+
+    numSteps = Int64(floor(size/2.0))
+    sizeIsOdd = Bool(mod(size,2))
 
     # mpo_arr = convert(Array, mpo)
     # mpo = TensorMap(mpo_arr, ComplexSpace(2)*ComplexSpace(5), ComplexSpace(5)*ComplexSpace(2))
@@ -59,26 +62,15 @@ function iDMRG2(mpo::A; χ::Int64=64, numSteps::Int64=100, tol::Float64=KrylovDe
     # mpoBoundaryTensL = TensorMap(mpoBoundaryTensL, space(mpoBoundaryTensL, 1), space(mpoBoundaryTensL, 2))
     # mpoBoundaryTensR = Tensor([0 1], mpoSpaceR*mpoSpaceO)
 
-    # println(mpoBoundaryTensL)
-
     # initialize MPS tensors
     T1 = TensorMap(randn, ComplexF64, mpsSpaceL ⊗ physSpace, mpsSpaceShared)
     T2 = TensorMap(randn, ComplexF64, mpsSpaceShared ⊗ physSpace, mpsSpaceR)
-
-    # U, Spr, Vdag, ϵ = tsvd(T1*permute(T2, (1,), (2,3)), (1,2), (3,4), trunc = truncdim(χ))
-    # print(T1)
-    # println(U)
-    # print(T2)
-    # print(permute(Vdag, (1,2), (3,)))
 
     # initiliaze EL and ER
     IdL = TensorMap(ones, ComplexF64, mpsSpaceL, mpoSpaceI ⊗ mpsSpaceL)
     IdR = TensorMap(ones, ComplexF64, mpsSpaceR ⊗ mpoSpaceO, mpsSpaceR)
     @tensor EL[-1; -2 -3] := IdL[-1 1 -3] * mpoBoundaryTensL[1 -2]
     @tensor ER[-1 -2; -3] := mpoBoundaryTensR[-2 1] * IdR[-1 1 -3]
-
-    
-    # return
     
     # initialize array to store energy
     groundStateEnergy = zeros(Float64, numSteps, 5)
@@ -94,7 +86,7 @@ function iDMRG2(mpo::A; χ::Int64=64, numSteps::Int64=100, tol::Float64=KrylovDe
     # initialize tensorTrain
     # tensorTrain = Vector{A}(undef,2*numSteps) where {T<:Number, S<:Array{T}}
     # tensorTrain = Vector{A}(undef,2*numSteps) where {A<:AbstractTensorMap}
-    # tensorTrain = Vector{Any}(undef,4*numSteps)
+    tensorTrain = Vector{Any}(undef,size)
     # tensorTrain = {}
 
     
@@ -102,7 +94,6 @@ function iDMRG2(mpo::A; χ::Int64=64, numSteps::Int64=100, tol::Float64=KrylovDe
     theta = permute(T1 * permute(T2, (1,), (2,3)), (1,2,3), (4,))
     Spr = TensorMap(ones, zeroIrrep, zeroIrrep);
     # print("new guess spaces: ",space(theta),"\n")
-    
     # main growing loop
     for i = 1 : numSteps
         
@@ -134,25 +125,16 @@ function iDMRG2(mpo::A; χ::Int64=64, numSteps::Int64=100, tol::Float64=KrylovDe
 
         # update environments
         EL = update_EL(EL, U, mpo)
-
         ER = update_ER(ER, Vdag, mpo)
         # print("spaces ER: ",space(ER),"\n")
 
-        # shift quantum numbers
-        # maxIrrepL = SU2Space((i + 1)/2 => 1)
-        # maxIrrepR = SU2Space((i + 2)/2 => 1)
-        # maxIrrepL = SU2Space((i + 1)/2 => 1)
-        maxIrrepR = U1Space((i+1) => 1)
-        ER = shiftVirtSpaceEnv(ER, oneIrrep, maxIrrepR)
-        # ER = shiftVirtSpaceMPS(ER, oneIrrep)
-
-        # save the tensors
-        # tensorTrain[2*(i-1)+i_bond] = U
-        # tensorTrain[end-2*(i-1)-i_bond+1] = V
-
-        # obtain the new tensors for MPS
-        # theta = newGuess(oneIrrep, maxIrrepL, maxIrrepR, Spr, Vdag, S, U)
-        theta = TensorMap(randn, space(EL,3)' ⊗ space(theta, 2) ⊗ space(theta, 3), space(ER, 1))
+        # shift and obtain new guess tensor
+        if i != numSteps
+            ER = shiftVirtSpaceMPS(ER, oneIrrep)
+            theta = newGuess(oneIrrep, Spr, Vdag, S, U)
+        end
+        # theta = braid(theta, (1,3,2), (4,))
+        # theta = TensorMap(randn, space(EL,3)' ⊗ space(theta, 2) ⊗ space(theta, 3), space(ER, 1))
 
         # calculate ground state energy
         gsEnergy = 1/2*(currEigenVal - prevEigenVal)
@@ -162,7 +144,66 @@ function iDMRG2(mpo::A; χ::Int64=64, numSteps::Int64=100, tol::Float64=KrylovDe
 
         # print simulation progress
         @printf("%05i : E_iDMRG / Convergence / Discarded Weight / BondDim : %0.15f / %0.15f / %d \n",i,real(gsEnergy),ϵ,current_χ)
+        # print("spaces Spr: ",space(Spr),"\n")
+
+        # save the tensors of the current step
         
+        tensorTrain[i] = U
+        if i == numSteps && !sizeIsOdd
+            tensorTrain[i] = U*Spr
+        end
+        tensorTrain[end-i+1] = Vdag
+        # shift all tensors in tensor train
+        if i != numSteps
+            for j = 1 : i
+                tensorTrain[end-j+1] = shiftVirtSpaceMPS(tensorTrain[end-j+1], oneIrrep)
+            end
+        end
+    end
+
+    # perform additional growing step
+    if sizeIsOdd
+        # ER = shiftVirtSpaceMPS(ER, SU2Space(1/2=>1))
+        lastvs = U1Space(1=>1)
+        ER = shiftVirtSpaceMPS(ER, lastvs)
+        for j = 1 : numSteps
+            tensorTrain[end-j+1] = shiftVirtSpaceMPS(tensorTrain[end-j+1], lastvs)
+        end
+        theta = TensorMap(randn, space(EL,3)' ⊗ space(theta, 2), space(ER, 1))
+        
+        # store previous eivenvalue
+        prevEigenVal = currEigenVal;
+        
+        # optimize wave function
+        eigenVal, eigenVec = 
+            eigsolve(theta,1, :SR, Arnoldi(tol=tol)) do x
+                applyH1(x, EL, mpo, ER)
+            end
+        currEigenVal = eigenVal[1]
+        theta = eigenVec[1]
+
+        norm = @tensor theta[1 2 3]*conj(theta[1 2 3])
+        theta = theta/norm
+        
+        #  perform SVD and truncate to desired bond dimension
+        # S = Spr
+        # U, Spr, Vdag, ϵ = tsvd(currEigenVec, (1,2), (3,), trunc = truncdim(χ))
+        # U, Spr, Vdag, ϵ = tsvd(currEigenVec, (1,2), (3,4))
+        # print("spaces Spr: ",space(Spr),"\n")
+        # print("spaces Vdag: ",space(Vdag),"\n")
+
+        # current_χ = dim(space(Spr,1))
+
+        # calculate ground state energy
+        gsEnergy = 1/2*(currEigenVal - prevEigenVal)
+
+        # # calculate overlap between old and new wave function
+        # @tensor waveFuncOverlap[:] := currEigenVec[1 2 3] * conj(prevEigenVec[1 2 3]);
+
+        # print simulation progress
+        @printf("%07.1f : E_iDMRG : %0.15f \n",size/2,real(gsEnergy))
+        # print("spaces Spr: ",space(Spr),"\n")
+        tensorTrain[Int64(floor(size/2+1))] = theta
     end
     
     # tensorTrain[2*numSteps+1] = gammaList[1]
@@ -170,9 +211,9 @@ function iDMRG2(mpo::A; χ::Int64=64, numSteps::Int64=100, tol::Float64=KrylovDe
 
     # mps = DMRG_types.MPS([tensor for tensor in tensorTrain]);
 
-    print("spaces Spr: ",space(Spr),"\n")
-    print("spaces ER: ",space(ER),"\n")
+    # print("spaces Spr: ",space(Spr),"\n")
+    # print("spaces ER: ",space(ER),"\n")
 
-    return
+    return tensorTrain
     
 end

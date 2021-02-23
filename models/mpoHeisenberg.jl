@@ -1,4 +1,4 @@
-function mpoHeisenberg(;J::Float64 = 1.0, spinS::Float64 = 1/2, setSym = "")
+function mpoHeisenberg(; J::Float64 = 1.0, spinS::Float64 = 1/2, setSym = "")
 
     # construct MPOs with different symmetries
     if setSym == ""
@@ -44,26 +44,26 @@ function mpoHeisenberg(;J::Float64 = 1.0, spinS::Float64 = 1/2, setSym = "")
 
         mpo = TensorMap(ham_arr, vM ⊗ vP, vM ⊗ vP)
     
-    elseif setSym == "SU2"
+    # elseif setSym == "SU2"
 
-        # TODO this does not work with the VSCode debugger...
+    #     # TODO this does not work with the VSCode debugger...
 
-        # set vector spaces 
-        vP = SU₂Space(spinS => 1)
-        mpoSpaceL = SU₂Space(0 => 2, 1 => 1)
-        mpoSpaceR = SU₂Space(0 => 2, 1 => 1)
-        γ = sqrt(spinS * (spinS + 1))
+    #     # set vector spaces 
+    #     vP = SU₂Space(spinS => 1)
+    #     mpoSpaceL = SU₂Space(0 => 2, 1 => 1)
+    #     mpoSpaceR = SU₂Space(0 => 2, 1 => 1)
+    #     γ = sqrt(spinS * (spinS + 1))
 
-        # construct empty MPO
-        mpo = TensorMap(zeros, ComplexF64, mpoSpaceL ⊗ vP, mpoSpaceR ⊗ vP)
+    #     # construct empty MPO
+    #     mpo = TensorMap(zeros, ComplexF64, mpoSpaceL ⊗ vP, mpoSpaceR ⊗ vP)
 
-        # fill tensor blocks
-        tensorDict = convert(Dict, mpo)
-        dictKeys = keys(tensorDict)
-        dataDict = tensorDict[:data]
-        dataDict["Irrep[SU₂](1/2)"] = Array{ComplexF64}([1.0 0.0 J * γ ; 0.0 1.0 0.0 ; 0.0 γ 0.0])
-        tensorDict[:data] = dataDict
-        mpo = convert(TensorMap, tensorDict)
+    #     # fill tensor blocks
+    #     tensorDict = convert(Dict, mpo)
+    #     dictKeys = keys(tensorDict)
+    #     dataDict = tensorDict[:data]
+    #     dataDict["Irrep[SU₂](1/2)"] = Array{ComplexF64}([1.0 0.0 J * γ ; 0.0 1.0 0.0 ; 0.0 γ 0.0])
+    #     tensorDict[:data] = dataDict
+    #     mpo = convert(TensorMap, tensorDict)
 
     end
 
