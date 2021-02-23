@@ -1,3 +1,5 @@
+using TensorKit
+
 function mpoHeisenberg(; J::Float64 = 1.0, spinS::Float64 = 1/2, setSym = "")
 
     # construct MPOs with different symmetries

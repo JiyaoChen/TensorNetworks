@@ -1,3 +1,5 @@
+using TensorKit
+
 function generateParameters()
     parameters = Dict{Any,Any}()
     push!(parameters, "χ" => 100)

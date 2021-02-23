@@ -1,3 +1,5 @@
+using TensorKit
+
 function mpoIsing(; J::Float64 = 4.0, h::Float64 = 2.0, setSym::String = "Z2")
 
     # set vector spaces

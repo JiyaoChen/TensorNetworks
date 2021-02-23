@@ -21,7 +21,7 @@ Base.run(`clear`)
 model = DMRG_types.Model(generateHeisenbergU1, generateInitialVS, generateParameters)
 
 mps = DMRG_types.MPS(model, init = ones)
-@time mps = DMRG_engine.DMRG2(mps, model)
+# @time mps = DMRG_engine.DMRG2(mps, model)
 
 # # simulation parameters
 # χ = 10
