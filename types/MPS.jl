@@ -34,7 +34,7 @@ function MPS(site_tensors::Vector{A}) where {A<:MPSTensor}
         @tensor norm[:] := norm[1 2] * site_tensors[i][1 3 -1] * conj(site_tensors[i][2 3 -2])
     end
     norm = @tensor norm[1 2] * site_tensors[end][1 3 4] * conj(site_tensors[end][2 3 4])
-    if abs(norm - 1e0) > 1e-14
+    if abs(norm - 1e0) > 1e-12
         println(norm)
         throw(ErrorException("Norm of MPS not sufficiently close to 1.0. Norm is: " * string(norm)))
     end

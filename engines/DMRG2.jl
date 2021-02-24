@@ -3,12 +3,11 @@ function DMRG2(mps::DMRG_types.MPS, env::DMRG_types.MPOEnvironments, model::DMRG
     # get parameters from dict
     χ = model.P["χ"]
     tol = model.P["tol"]
-    sweeps = model.P["sweeps"]
     maxiter = model.P["maxiter"]
     krylovdim = model.P["krylovdim"]
     solver = model.P["solver"]
 
-    for s = 1 : sweeps
+    for s = 1 : length(χ)
         # left -> right sweeping
         for i = 1 : length(mps.ARs) - 1
             # construct initial theta
@@ -27,7 +26,7 @@ function DMRG2(mps::DMRG_types.MPS, env::DMRG_types.MPOEnvironments, model::DMRG
             tol = abs(overlap)
 
             #  perform SVD and truncate to desired bond dimension
-            U, S, Vdag, ϵ = tsvd(currEigenVec, (1,2), (3,4), trunc = truncdim(χ))
+            U, S, Vdag, ϵ = tsvd(currEigenVec, (1,2), (3,4), trunc = truncdim(χ[s]))
             current_χ = dim(space(S,1))
             Vdag = permute(Vdag, (1,2), (3,))
 
@@ -42,7 +41,9 @@ function DMRG2(mps::DMRG_types.MPS, env::DMRG_types.MPOEnvironments, model::DMRG
             env.mpoEnvL[i+1] = update_EL(env.mpoEnvL[i], U, model.H.mpo[i])
             # env.mpoEnvR[i] = update_ER(env.mpoEnvR[i+1], Vdag, model.H.mpo[i+1])
 
-            @printf("%03i/%03i : E_DMRG2 / Discarded Weight / tol / BondDim : %0.15f / %0.15f / %0.15f / %d \n",s,i,real(currEigenVal),ϵ,tol,current_χ)
+            if i == floor(length(mps.ARs)/2)
+                @printf("%03i/%03i : E_DMRG2 / Discarded Weight / tol / BondDim : %0.15f / %0.15f / %0.15f / %d \n",s,i,real(currEigenVal),ϵ,tol,current_χ)
+            end
             
         end
 
@@ -64,7 +65,7 @@ function DMRG2(mps::DMRG_types.MPS, env::DMRG_types.MPOEnvironments, model::DMRG
             tol = abs(overlap)
 
             #  perform SVD and truncate to desired bond dimension
-            U, S, Vdag, ϵ = tsvd(currEigenVec, (1,2), (3,4), trunc = truncdim(χ))
+            U, S, Vdag, ϵ = tsvd(currEigenVec, (1,2), (3,4), trunc = truncdim(χ[s]))
             current_χ = dim(space(S,1))
             Vdag = permute(Vdag, (1,2), (3,))
 
@@ -79,9 +80,12 @@ function DMRG2(mps::DMRG_types.MPS, env::DMRG_types.MPOEnvironments, model::DMRG
             # env.mpoEnvL[i+1] = update_EL(env.mpoEnvL[i], U, model.H.mpo[i])
             env.mpoEnvR[i] = update_ER(env.mpoEnvR[i+1], Vdag, model.H.mpo[i+1])
 
-            @printf("%03i/%03i : E_DMRG2 / Discarded Weight / tol / BondDim : %0.15f / %0.15f / %0.15f / %d \n",s,i,real(currEigenVal),ϵ,tol,current_χ)
+            if i == floor(length(mps.ARs)/2)
+                @printf("%03i/%03i : E_DMRG2 / Discarded Weight / tol / BondDim : %0.15f / %0.15f / %0.15f / %d \n",s,i,real(currEigenVal),ϵ,tol,current_χ)
+            end
             
         end
     end
 
+    return mps
 end

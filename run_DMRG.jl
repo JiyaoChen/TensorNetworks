@@ -8,23 +8,63 @@ using DMRG_engine
 include("getSpinOperators.jl")
 # include("models/mpoIsing.jl")
 # include("models/mpoHeisenberg.jl")
+include("models/mpoHeisenbergSU2.jl")
 include("models/mpoHeisenbergU1.jl")
+include("models/mpoHeisenbergNoSym.jl")
+include("models/mpoIsingNoSym.jl")
 include("parameters.jl")
 include("initialVS.jl")
 
 # clear console
 Base.run(`clear`)
 
-parameters = generateParameters()
-hamiltonian = generateHeisenbergU1(parameters)
-initialVectorSpaces = generateInitialVS(parameters)
+### SU2 story
+@time parameters = generateParameters()
+@time hamiltonian = generateHeisenbergSU2(parameters)
+@time initialVectorSpaces = generateInitialVSSU2(parameters)
 
-model = DMRG_types.Model(hamiltonian, initialVectorSpaces, parameters)
+@time model = DMRG_types.Model(hamiltonian, initialVectorSpaces, parameters)
 
-mps = DMRG_types.MPS(model, init = rand)
-env = DMRG_types.MPOEnvironments(mps, model.H)
+@time mps = DMRG_types.MPS(model, init = ones)
+@time env = DMRG_types.MPOEnvironments(mps, model.H)
 
-@time DMRG_engine.DMRG2(mps, env, model)
+@time mps = DMRG_engine.DMRG2(mps, env, model)
+
+### U1 story
+@time parameters = generateParameters()
+@time hamiltonian = generateHeisenbergU1(parameters)
+@time initialVectorSpaces = generateInitialVS(parameters)
+
+@time model = DMRG_types.Model(hamiltonian, initialVectorSpaces, parameters)
+
+@time mps = DMRG_types.MPS(model, init = ones)
+@time env = DMRG_types.MPOEnvironments(mps, model.H)
+
+@time mps = DMRG_engine.DMRG2(mps, env, model)
+
+### NoSym story
+@time parameters = generateParameters()
+@time hamiltonian = generateHeisenbergNoSym(parameters)
+@time initialVectorSpaces = generateInitialVSNoSym(parameters)
+
+@time model = DMRG_types.Model(hamiltonian, initialVectorSpaces, parameters)
+
+@time mps = DMRG_types.MPS(model, init = ones)
+@time env = DMRG_types.MPOEnvironments(mps, model.H)
+
+@time mps = DMRG_engine.DMRG2(mps, env, model)
+
+
+# @time parameters = generateParameters()
+# @time hamiltonian = generateIsingNoSym(parameters)
+# @time initialVectorSpaces = generateInitialVSNoSym(parameters)
+
+# @time model = DMRG_types.Model(hamiltonian, initialVectorSpaces, parameters)
+
+# @time mps = DMRG_types.MPS(model, init = ones)
+# @time env = DMRG_types.MPOEnvironments(mps, model.H)
+
+# @time mps = DMRG_engine.DMRG2(mps, env, model)
 
 # just checking if the contractions work
 # @tensor env.mpoEnvL[1][1 2 4] * mps.ACs[1][4 5 6] * hamiltonian.mpo[1][2 3 8 5] * conj(mps.ACs[1][1 3 7]) * env.mpoEnvR[1][6 8 7]
@@ -39,3 +79,4 @@ env = DMRG_types.MPOEnvironments(mps, model.H)
 # tbgateArr = reshape(convert(Array, tbgate_reduced), (dim(codomain(tbgate_reduced)),dim(domain(tbgate_reduced))))
 # nzIndices = findall(x->x!=0, tbgateArr)
 # [tbgateArr[nz] for nz in nzIndices]
+0;

@@ -1,10 +1,10 @@
 using TensorKit
 
-function generateHeisenbergU1(P::Dict)
+function generateHeisenbergNoSym(P::Dict)
     
     # set vector spaces
-    vP = U1Space(0 => 1, 1 => 1)
-    vM = U1Space(0 => 3, -1 => 1, +1 => 1)
+    vP = ℂ^2
+    vM = ℂ^5
 
     # get spin operators
     Sx, Sy, Sz, Id, Sm, Sp = getSpinOperators(P["spin"])

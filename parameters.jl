@@ -3,21 +3,25 @@ using KrylovKit
 
 function generateParameters()
 
+    # this might not be the best choice for the dict entries
     parameters = Dict{Any,Any}()
-    push!(parameters, "χ" => 256)
-    push!(parameters, "sweeps" => 8)
+
+    # settings related to the sweeping procedure
+    # χ = [fill(χ,4) for χ in [2 4 8 16 32 64 128 256 512 1024 1024 1024]]
+    χ = [fill(χ,4) for χ in [2 4 8 16 32 64]]
+    push!(parameters, "χ" => [(χ...)...])
     push!(parameters, "length" => 100)
     
     # settings for the eigensolver
-    push!(parameters, "solver" => Arnoldi)
-    push!(parameters, "tol" => 1e-4)
-    push!(parameters, "maxiter" => 4)
+    push!(parameters, "solver" => Lanczos)
+    push!(parameters, "tol" => 1e-1)
+    push!(parameters, "maxiter" => 1)
     push!(parameters, "krylovdim" => 3)
     
-    # TODO -- move to Hamiltonian?
+    # TODO -- move this block to Hamiltonian?
     push!(parameters, "sym" => U1Space)
     push!(parameters, "spin" => 1/2)
-    push!(parameters, "eltype" => Float64)
+    push!(parameters, "eltype" => Complex{Float64})
     
     return parameters
 
