@@ -12,7 +12,7 @@ function generateHeisenbergU1(P::Dict)
     mpos = Vector{Any}(undef,P["length"])
     Js = fill(1.0, length(mpos))
     for (idx, J) in enumerate(Js)
-        ham_arr = zeros(ComplexF64, dim(vM), dim(vP), dim(vM), dim(vP))
+        ham_arr = zeros(P["eltype"], dim(vM), dim(vP), dim(vM), dim(vP))
 
         # let's spare ourselves the trouble of defining boundary vectors :)
         if idx != length(Js)
@@ -20,7 +20,8 @@ function generateHeisenbergU1(P::Dict)
             ham_arr[1,:,4,:] = 0.5 * J * Sm
             ham_arr[1,:,5,:] = 0.5 * J * Sp
             ham_arr[1,:,3,:] = J * Sz
-        elseif idx != 1
+        end
+        if idx != 1
             ham_arr[4,:,2,:] = Sp
             ham_arr[5,:,2,:] = Sm
             ham_arr[3,:,2,:] = Sz

@@ -108,7 +108,7 @@ function iDMRG2(mpo::A; χ::Int64=64, size::Int64=100, tol::Float64=KrylovDefaul
         # optimize wave function
         eigenVal, eigenVec = 
             eigsolve(theta,1, :SR, Arnoldi(tol=tol)) do x
-                applyH(x, EL, mpo, ER)
+                applyH(x, EL, mpo, mpo, ER)
             end
         currEigenVal = eigenVal[1]
         currEigenVec = eigenVec[1]
