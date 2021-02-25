@@ -7,7 +7,7 @@ function generateInitialVS(P::Dict)
     ctr = 0
     for i = 1 : length(qns)
         qns[i] = ctr
-        ctr += mod(i,2)
+        ctr += mod(i,2)*floor((2*P["spin"]+1)/2)
     end
     vectorspaces = [P["sym"](qns[i] => 1) for i = 1 : length(qns)]
     
@@ -25,7 +25,7 @@ end
 
 function generateInitialVSSU2(P::Dict)
 
-    vectorspaces = [SU2Space(mod(i,2)/2=>1) for i = 0 : P["length"]]
+    vectorspaces = [SU2Space(mod(i,2)*P["spin"]=>1) for i = 0 : P["length"]]
     
     return vectorspaces
 

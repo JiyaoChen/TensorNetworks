@@ -8,19 +8,19 @@ function generateParameters()
 
     # settings related to the sweeping procedure
     # χ = [fill(χ,4) for χ in [2 4 8 16 32 64 128 256 512 1024 1024 1024]]
-    χ = [fill(χ,4) for χ in [2 4 8 16 32 64]]
+    χ = [fill(χ,4) for χ in [128 256 512]]
     push!(parameters, "χ" => [(χ...)...])
-    push!(parameters, "length" => 100)
+    push!(parameters, "length" => 32)
     
     # settings for the eigensolver
-    push!(parameters, "solver" => Lanczos)
+    push!(parameters, "solver" => Arnoldi)
     push!(parameters, "tol" => 1e-1)
     push!(parameters, "maxiter" => 1)
-    push!(parameters, "krylovdim" => 3)
+    push!(parameters, "krylovdim" => 4)
     
     # TODO -- move this block to Hamiltonian?
     push!(parameters, "sym" => U1Space)
-    push!(parameters, "spin" => 1/2)
+    push!(parameters, "spin" => 5.5)
     push!(parameters, "eltype" => Complex{Float64})
     
     return parameters

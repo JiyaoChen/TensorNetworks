@@ -30,11 +30,18 @@ function update_ER(ER, Vdag, mpo)
 end
 
 function applyH(X, EL, mpo1, mpo2, ER)
+    Y = zero(X)
     @tensor Y[-1 -2 -3; -4] := EL[-1 2 1] * X[1 3 4 6] * mpo1[2 -2 5 3] * mpo2[5 -3 7 4] * ER[6 7 -4]
     return Y
 end
 
 function applyH1(X, EL, mpo, ER)
+    Y = zero(X)
     @tensor Y[-1 -2; -3] := EL[-1 2 1] * X[1 3 4] * mpo[2 -2 5 3] * ER[4 5 -3]
     return Y
+end
+
+function applyH2(X, EL, mpo1, mpo2, ER)
+    @tensor X[-1 -2 -3; -4] := EL[-1 2 1] * X[1 3 5 6] * mpo1[2 -2 4 3] * mpo2[4 -3 7 5] * ER[6 7 -4]
+    return X
 end

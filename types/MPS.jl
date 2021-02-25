@@ -54,7 +54,7 @@ function MPS(site_tensors::Vector{A}) where {A<:MPSTensor}
 
 end
 
-function MPS(model::Model ; init::Function = randn) where {S<:EuclideanSpace}
+function MPS(model::Model ; init::Function = randn)
     
     # extract list of physical spaces from the MPO
     physSpaces = [space(mpo,4)' for mpo in model.H.mpo]

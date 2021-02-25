@@ -1,6 +1,7 @@
 using TensorKit
+include("getSpinOperators.jl")
 
-function generateHeisenbergU1(P::Dict)
+function generateHCBLadderU1(P::Dict)
     
     # set vector spaces
     vP = U1Space(0 => 1, 1 => 1)
@@ -15,7 +16,7 @@ function generateHeisenbergU1(P::Dict)
     # this does not at all make sense for huge systems -- better store objects in MPO and overload the getters
     for (idx, J) in enumerate(Js)
 
-        ham_arr = zeros(P["eltype"], dim(vM), dim(vP), dim(vM), dim(vP))
+        ham_arr = spzeros(P["eltype"], dim(vM), dim(vP), dim(vM), dim(vP))
 
         # let's spare ourselves the trouble of defining boundary vectors :)
         if idx != length(Js)

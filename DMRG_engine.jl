@@ -10,8 +10,8 @@ module DMRG_engine
     using DMRG_types
 
     # make public
-    export iDMRG2
     export DMRG2
+    export iDMRG2
     
     # include engines
     include("engines/DMRG2.jl")

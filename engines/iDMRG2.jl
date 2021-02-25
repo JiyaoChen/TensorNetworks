@@ -1,13 +1,12 @@
-# additional contractions used in this scope
-include("iDMRG2_contractions.jl")
+# collection of necessary contractions
+include("DMRG_contractions.jl")
 include("iDMRG2_link_manipulations.jl")
-using DMRG_types
 
 # traditional growing algorithm -- starts from scratch with a given mpo tensor and variationally searches for the (2-site periodic) MPS
-function iDMRG2(mpo::A; χ::Int64=64, size::Int64=100, tol::Float64=KrylovDefaults.tol) where {A<:AbstractTensorMap{S,2,2} where {S<:EuclideanSpace}}
+function iDMRG2(mpo::A; χ::Int64=64, systemSize::Int64=100, tol::Float64=KrylovDefaults.tol) where {A<:AbstractTensorMap{S,2,2} where {S<:EuclideanSpace}}
 
-    numSteps = Int64(floor(size/2.0))
-    sizeIsOdd = Bool(mod(size,2))
+    numSteps = Int64(floor(systemSize/2.0))
+    systemSizeIsOdd = Bool(mod(systemSize,2))
 
     # mpo_arr = convert(Array, mpo)
     # mpo = TensorMap(mpo_arr, ComplexSpace(2)*ComplexSpace(5), ComplexSpace(5)*ComplexSpace(2))
@@ -28,7 +27,7 @@ function iDMRG2(mpo::A; χ::Int64=64, size::Int64=100, tol::Float64=KrylovDefaul
         oneIrrep = U1Space(1 => 1)
     elseif  occursin("SU2Irrep",string(typeof(physSpace)))
         zeroIrrep = SU₂Space(0 => 1)
-        oneIrrep = SU₂Space(1 => 1)
+        oneIrrep = SU₂Space(0 => 1)
     end
     mpsSpaceL = zeroIrrep
     mpsSpaceR = oneIrrep
@@ -86,7 +85,7 @@ function iDMRG2(mpo::A; χ::Int64=64, size::Int64=100, tol::Float64=KrylovDefaul
     # initialize tensorTrain
     # tensorTrain = Vector{A}(undef,2*numSteps) where {T<:Number, S<:Array{T}}
     # tensorTrain = Vector{A}(undef,2*numSteps) where {A<:AbstractTensorMap}
-    tensorTrain = Vector{Any}(undef,size)
+    tensorTrain = Vector{Any}(undef,systemSize)
     # tensorTrain = {}
 
     
@@ -149,7 +148,7 @@ function iDMRG2(mpo::A; χ::Int64=64, size::Int64=100, tol::Float64=KrylovDefaul
         # save the tensors of the current step
         
         tensorTrain[i] = U
-        if i == numSteps && !sizeIsOdd
+        if i == numSteps && !systemSizeIsOdd
             tensorTrain[i] = U*Spr
         end
         tensorTrain[end-i+1] = Vdag
@@ -162,7 +161,7 @@ function iDMRG2(mpo::A; χ::Int64=64, size::Int64=100, tol::Float64=KrylovDefaul
     end
 
     # perform additional growing step
-    if sizeIsOdd
+    if systemSizeIsOdd
         # ER = shiftVirtSpaceMPS(ER, SU2Space(1/2=>1))
         lastvs = U1Space(1=>1)
         ER = shiftVirtSpaceMPS(ER, lastvs)
@@ -201,9 +200,9 @@ function iDMRG2(mpo::A; χ::Int64=64, size::Int64=100, tol::Float64=KrylovDefaul
         # @tensor waveFuncOverlap[:] := currEigenVec[1 2 3] * conj(prevEigenVec[1 2 3]);
 
         # print simulation progress
-        @printf("%07.1f : E_iDMRG : %0.15f \n",size/2,real(gsEnergy))
+        @printf("%07.1f : E_iDMRG : %0.15f \n",systemSize/2,real(gsEnergy))
         # print("spaces Spr: ",space(Spr),"\n")
-        tensorTrain[Int64(floor(size/2+1))] = theta
+        tensorTrain[Int64(floor(systemSize/2+1))] = theta
     end
     
     # tensorTrain[2*numSteps+1] = gammaList[1]

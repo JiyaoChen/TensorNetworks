@@ -4,21 +4,18 @@ push!(LOAD_PATH, pwd())
 using DMRG_types
 using DMRG_engine
 
-# # include models
-include("getSpinOperators.jl")
-# include("models/mpoIsing.jl")
-# include("models/mpoHeisenberg.jl")
-include("models/mpoHeisenbergSU2.jl")
-include("models/mpoHeisenbergU1.jl")
-include("models/mpoHeisenbergNoSym.jl")
-include("models/mpoIsingNoSym.jl")
+# include models
+include("models/mpoHeisenberg.jl")
+include("models/mpoIsing.jl")
+
+# include system parameters
 include("parameters.jl")
 include("initialVS.jl")
 
 # clear console
 Base.run(`clear`)
 
-### SU2 story
+### SU2
 @time parameters = generateParameters()
 @time hamiltonian = generateHeisenbergSU2(parameters)
 @time initialVectorSpaces = generateInitialVSSU2(parameters)
@@ -30,7 +27,7 @@ Base.run(`clear`)
 
 @time mps = DMRG_engine.DMRG2(mps, env, model)
 
-### U1 story
+### U1
 @time parameters = generateParameters()
 @time hamiltonian = generateHeisenbergU1(parameters)
 @time initialVectorSpaces = generateInitialVS(parameters)
@@ -42,7 +39,7 @@ Base.run(`clear`)
 
 @time mps = DMRG_engine.DMRG2(mps, env, model)
 
-### NoSym story
+### NoSym
 @time parameters = generateParameters()
 @time hamiltonian = generateHeisenbergNoSym(parameters)
 @time initialVectorSpaces = generateInitialVSNoSym(parameters)

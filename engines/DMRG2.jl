@@ -1,3 +1,10 @@
+# collection of necessary contractions
+include("DMRG_contractions.jl")
+
+function verbosePrint(s::Int64,i::Int64,currEigenVal::Float64,ϵ::Float64,tol::Float64,current_χ::Int64)
+    @info("DMRG2 -- Sweep "*string(s),i,currEigenVal,ϵ,tol,current_χ)
+end
+
 function DMRG2(mps::DMRG_types.MPS, env::DMRG_types.MPOEnvironments, model::DMRG_types.Model)
     
     # get parameters from dict
@@ -16,7 +23,7 @@ function DMRG2(mps::DMRG_types.MPS, env::DMRG_types.MPOEnvironments, model::DMRG
             # optimize wave function
             eigenVal, eigenVec = 
                 eigsolve(theta,1, :SR, Lanczos(tol=tol,maxiter=maxiter,krylovdim=krylovdim)) do x
-                    applyH(x, env.mpoEnvL[i], model.H.mpo[i], model.H.mpo[i+1], env.mpoEnvR[i+1])
+                    applyH2(x, env.mpoEnvL[i], model.H.mpo[i], model.H.mpo[i+1], env.mpoEnvR[i+1])
                 end
             currEigenVal = eigenVal[1]
             currEigenVec = eigenVec[1]
@@ -41,9 +48,7 @@ function DMRG2(mps::DMRG_types.MPS, env::DMRG_types.MPOEnvironments, model::DMRG
             env.mpoEnvL[i+1] = update_EL(env.mpoEnvL[i], U, model.H.mpo[i])
             # env.mpoEnvR[i] = update_ER(env.mpoEnvR[i+1], Vdag, model.H.mpo[i+1])
 
-            if i == floor(length(mps.ARs)/2)
-                @printf("%03i/%03i : E_DMRG2 / Discarded Weight / tol / BondDim : %0.15f / %0.15f / %0.15f / %d \n",s,i,real(currEigenVal),ϵ,tol,current_χ)
-            end
+            verbosePrint(s,i,real(currEigenVal),ϵ,tol,current_χ)
             
         end
 
@@ -55,7 +60,7 @@ function DMRG2(mps::DMRG_types.MPS, env::DMRG_types.MPOEnvironments, model::DMRG
             # optimize wave function
             eigenVal, eigenVec = 
                 eigsolve(theta,1, :SR, Lanczos(tol=tol,maxiter=maxiter,krylovdim=krylovdim)) do x
-                    applyH(x, env.mpoEnvL[i], model.H.mpo[i], model.H.mpo[i+1], env.mpoEnvR[i+1])
+                    applyH2(x, env.mpoEnvL[i], model.H.mpo[i], model.H.mpo[i+1], env.mpoEnvR[i+1])
                 end
             currEigenVal = eigenVal[1]
             currEigenVec = eigenVec[1]
@@ -80,9 +85,7 @@ function DMRG2(mps::DMRG_types.MPS, env::DMRG_types.MPOEnvironments, model::DMRG
             # env.mpoEnvL[i+1] = update_EL(env.mpoEnvL[i], U, model.H.mpo[i])
             env.mpoEnvR[i] = update_ER(env.mpoEnvR[i+1], Vdag, model.H.mpo[i+1])
 
-            if i == floor(length(mps.ARs)/2)
-                @printf("%03i/%03i : E_DMRG2 / Discarded Weight / tol / BondDim : %0.15f / %0.15f / %0.15f / %d \n",s,i,real(currEigenVal),ϵ,tol,current_χ)
-            end
+            verbosePrint(s,i,real(currEigenVal),ϵ,tol,current_χ)
             
         end
     end
