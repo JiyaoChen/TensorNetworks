@@ -43,13 +43,13 @@ println("Creation of R")
 
 # applyH(T, L, W, W, R)
 
-# println("W*W")
-# @time W * W  # this is good
-# @time @tensor trash[:] := W[-1 -2 1 2] * W[1 2 -3 -4]  # this is bad
+println("W*W")
+@time W * W  # this is good
+@time @tensor trash[:] := W[-1 -2 1 2] * W[1 2 -3 -4]  # this is bad
 
-# println("T'*T")
-# @time T' * T  # this is good
-# @time @tensor trash[:] := T[1 2 3 -4] * conj(T[1 2 3 -5])  # this is bad
+println("T'*T")
+@time T' * T  # this is good
+@time @tensor trash[:] := T[1 2 3 -4] * conj(T[1 2 3 -5])  # this is bad
 
 # println("T*T'")
 # @time T * T'  # this is good
@@ -148,41 +148,41 @@ function tensorLTWWR_vec(x,L,T,W1,W2,R)  # this is good :)
     return x
 end
 
-# println("L*T*W*W*R -- first ordering")
-# LTWWR = tensorLTWWR1(L,T,W,W,R)
-# for i = 1:10
-#     @time global LTWWR = tensorLTWWR1(L,LTWWR,W,W,R)
-# end
-
-# println("L*T*W*W*R -- second ordering")
-# LTWWR = tensorLTWWR2(L,T,W,W,R)
-# for i = 1:10
-#     @time global LTWWR = tensorLTWWR2(L,LTWWR,W,W,R)
-# end
-
-# println("L*T*W*W*R -- optimized???")
-# LTWWR = tensorLTWWR_opt(L,T,W,W,R)
-# for i = 1:10
-#     @time global LTWWR = tensorLTWWR_opt(L,LTWWR,W,W,R)
-# end
-
-tol = 1e-15
-maxiter = 12
-krylovdim = 10
-
-println("Arnoldi eigsolve")
-solver = Arnoldi
-for i = 1:3
-    @time eigenVal, eigenVec = eigsolve(x->tensorLTWWR1(L,x,W,W,R),T,1,:SR,solver(tol=tol,maxiter=maxiter,krylovdim=krylovdim))
-    println(abs(eigenVal[1]))
+println("L*T*W*W*R -- first ordering")
+LTWWR = tensorLTWWR1(L,T,W,W,R)
+for i = 1:10
+    @time global LTWWR = tensorLTWWR1(L,LTWWR,W,W,R)
 end
 
-println("Lanczos eigsolve")
-solver = Lanczos
-for i = 1:3
-    @time eigenVal, eigenVec = eigsolve(x->tensorLTWWR1(L,x,W,W,R),T,1,:SR,solver(tol=tol,maxiter=maxiter,krylovdim=krylovdim))
-    println(abs(eigenVal[1]))
+println("L*T*W*W*R -- second ordering")
+LTWWR = tensorLTWWR2(L,T,W,W,R)
+for i = 1:10
+    @time global LTWWR = tensorLTWWR2(L,LTWWR,W,W,R)
 end
+
+println("L*T*W*W*R -- optimized???")
+LTWWR = tensorLTWWR_opt(L,T,W,W,R)
+for i = 1:10
+    @time global LTWWR = tensorLTWWR_opt(L,LTWWR,W,W,R)
+end
+
+# tol = 1e-15
+# maxiter = 12
+# krylovdim = 10
+
+# println("Arnoldi eigsolve")
+# solver = Arnoldi
+# for i = 1:3
+#     @time eigenVal, eigenVec = eigsolve(x->tensorLTWWR1(L,x,W,W,R),T,1,:SR,solver(tol=tol,maxiter=maxiter,krylovdim=krylovdim))
+#     println(abs(eigenVal[1]))
+# end
+
+# println("Lanczos eigsolve")
+# solver = Lanczos
+# for i = 1:3
+#     @time eigenVal, eigenVec = eigsolve(x->tensorLTWWR1(L,x,W,W,R),T,1,:SR,solver(tol=tol,maxiter=maxiter,krylovdim=krylovdim))
+#     println(abs(eigenVal[1]))
+# end
 # @time tensorLTWWR_vec(convert(Array, T), L, T, W1, W2, R)
 # @time tensorLTWWR1(L, T, W1, W2, R)
 # eigs(convert(Array, T), nev=1, which=:LR) do x tensorLTWWR_vec(x,L,T,W1,W2,R) end

@@ -15,17 +15,19 @@ include("initialVS.jl")
 # clear console
 Base.run(`clear`)
 
-### SU2
-@time parameters = generateParameters()
-@time hamiltonian = generateHeisenbergSU2(parameters)
-@time initialVectorSpaces = generateInitialVSSU2(parameters)
+# ### SU2
+# @time parameters = generateParameters()
+# @time hamiltonian = generateHeisenbergSU2(parameters)
+# @time initialVectorSpaces = generateInitialVSSU2(parameters)
 
-@time model = DMRG_types.Model(hamiltonian, initialVectorSpaces, parameters)
+# @time model = DMRG_types.Model(hamiltonian, initialVectorSpaces, parameters)
 
-@time mps = DMRG_types.MPS(model, init = ones)
-@time env = DMRG_types.MPOEnvironments(mps, model.H)
+# @time mps = DMRG_types.MPS(model, init = ones)
+# @time env = DMRG_types.MPOEnvironments(mps, model.H)
 
-@time mps = DMRG_engine.DMRG2(mps, env, model)
+# @time mps = DMRG_engine.DMRG2(mps, env, model)
+
+
 
 ### U1
 @time parameters = generateParameters()
@@ -39,17 +41,22 @@ Base.run(`clear`)
 
 @time mps = DMRG_engine.DMRG2(mps, env, model)
 
-### NoSym
-@time parameters = generateParameters()
-@time hamiltonian = generateHeisenbergNoSym(parameters)
-@time initialVectorSpaces = generateInitialVSNoSym(parameters)
-
-@time model = DMRG_types.Model(hamiltonian, initialVectorSpaces, parameters)
-
 @time mps = DMRG_types.MPS(model, init = ones)
 @time env = DMRG_types.MPOEnvironments(mps, model.H)
 
-@time mps = DMRG_engine.DMRG2(mps, env, model)
+@time mps = DMRG_engine.DMRG1(mps, env, model)
+
+# ### NoSym
+# @time parameters = generateParameters()
+# @time hamiltonian = generateHeisenbergNoSym(parameters)
+# @time initialVectorSpaces = generateInitialVSNoSym(parameters)
+
+# @time model = DMRG_types.Model(hamiltonian, initialVectorSpaces, parameters)
+
+# @time mps = DMRG_types.MPS(model, init = ones)
+# @time env = DMRG_types.MPOEnvironments(mps, model.H)
+
+# @time mps = DMRG_engine.DMRG1(mps, env, model)
 
 
 # @time parameters = generateParameters()

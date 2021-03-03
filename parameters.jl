@@ -8,9 +8,9 @@ function generateParameters()
 
     # settings related to the sweeping procedure
     # χ = [fill(χ,4) for χ in [2 4 8 16 32 64 128 256 512 1024 1024 1024]]
-    χ = [fill(χ,4) for χ in [128 256 512]]
+    χ = [fill(χ,4) for χ in [256]]
     push!(parameters, "χ" => [(χ...)...])
-    push!(parameters, "length" => 32)
+    push!(parameters, "length" => 100)
     
     # settings for the eigensolver
     push!(parameters, "solver" => Arnoldi)
@@ -20,7 +20,7 @@ function generateParameters()
     
     # TODO -- move this block to Hamiltonian?
     push!(parameters, "sym" => U1Space)
-    push!(parameters, "spin" => 5.5)
+    push!(parameters, "spin" => 0.5)
     push!(parameters, "eltype" => Complex{Float64})
     
     return parameters

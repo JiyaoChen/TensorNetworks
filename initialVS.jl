@@ -26,6 +26,7 @@ end
 function generateInitialVSSU2(P::Dict)
 
     vectorspaces = [SU2Space(mod(i,2)*P["spin"]=>1) for i = 0 : P["length"]]
+    vectorspaces = [SU2Space(floor(i/2)+mod(i,2)*P["spin"]=>1) for i = 0 : P["length"]]
     
     return vectorspaces
 
