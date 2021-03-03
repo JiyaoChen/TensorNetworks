@@ -8,9 +8,9 @@ function generateParameters()
 
     # settings related to the sweeping procedure
     # χ = [fill(χ,4) for χ in [2 4 8 16 32 64 128 256 512 1024 1024 1024]]
-    χ = [fill(χ,4) for χ in [256]]
+    χ = [fill(χ,8) for χ in [256]]
     push!(parameters, "χ" => [(χ...)...])
-    push!(parameters, "length" => 100)
+    push!(parameters, "length" => 32)
     
     # settings for the eigensolver
     push!(parameters, "solver" => Arnoldi)
