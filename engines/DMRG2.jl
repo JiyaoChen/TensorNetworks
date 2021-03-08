@@ -1,8 +1,8 @@
 # collection of necessary contractions
 include("DMRG_contractions.jl")
 
-function verbosePrintDMRG2(s::Int64,i::Int64,currEigenVal::Float64,ϵ::Float64,tol::Float64,current_χ::Int64)
-    @info("DMRG2 -- Sweep "*string(s),i,currEigenVal,ϵ,tol,current_χ)
+function verbosePrintDMRG2(s::Int64,i::Int64,currEigenVal::Float64,ϵ::Float64,tol::Float64,current_χ::Int64,time::Float64)
+    @info("DMRG2 -- Sweep "*string(s),i,currEigenVal,ϵ,tol,current_χ,time)
 end
 
 function DMRG2(mps::DMRG_types.MPS, env::DMRG_types.MPOEnvironments, model::DMRG_types.Model)
@@ -25,7 +25,7 @@ function DMRG2(mps::DMRG_types.MPS, env::DMRG_types.MPOEnvironments, model::DMRG
             theta = permute(mps.ACs[i] * permute(mps.ARs[i+1], (1,), (2,3)), (1,2,3,4), ())
 
             # optimize wave function
-            @time eigenVal, eigenVec = 
+            elapsedTime = @elapsed eigenVal, eigenVec = 
                 eigsolve(theta,1, :SR, solver(tol=tol[i],maxiter=maxiter,krylovdim=krylovdim)) do x
                     applyH2(x, env.mpoEnvL[i], model.H.mpo[i], model.H.mpo[i+1], env.mpoEnvR[i+1])
                 end
@@ -52,7 +52,7 @@ function DMRG2(mps::DMRG_types.MPS, env::DMRG_types.MPOEnvironments, model::DMRG
             env.mpoEnvL[i+1] = update_EL(env.mpoEnvL[i], U, model.H.mpo[i])
             # env.mpoEnvR[i] = update_ER(env.mpoEnvR[i+1], Vdag, model.H.mpo[i+1])
 
-            verbosePrintDMRG2(s,i,real(currEigenVal),ϵ[i],tol[i],current_χ[i])
+            verbosePrintDMRG2(s,i,real(currEigenVal),ϵ[i],tol[i],current_χ[i],elapsedTime)
             
         end
 
@@ -62,7 +62,7 @@ function DMRG2(mps::DMRG_types.MPS, env::DMRG_types.MPOEnvironments, model::DMRG
             theta = permute(mps.ALs[i] * permute(mps.ACs[i+1], (1,), (2,3)), (1,2,3,4), ())
 
             # optimize wave function
-            @time eigenVal, eigenVec = 
+            elapsedTime = @elapsed eigenVal, eigenVec = 
                 eigsolve(theta,1, :SR, solver(tol=tol[i],maxiter=maxiter,krylovdim=krylovdim)) do x
                     applyH2(x, env.mpoEnvL[i], model.H.mpo[i], model.H.mpo[i+1], env.mpoEnvR[i+1])
                 end
@@ -89,7 +89,7 @@ function DMRG2(mps::DMRG_types.MPS, env::DMRG_types.MPOEnvironments, model::DMRG
             # env.mpoEnvL[i+1] = update_EL(env.mpoEnvL[i], U, model.H.mpo[i])
             env.mpoEnvR[i] = update_ER(env.mpoEnvR[i+1], Vdag, model.H.mpo[i+1])
 
-            verbosePrintDMRG2(s,i,real(currEigenVal),ϵ[i],tol[i],current_χ[i])
+            verbosePrintDMRG2(s,i,real(currEigenVal),ϵ[i],tol[i],current_χ[i],elapsedTime)
             
         end
 
