@@ -1,6 +1,7 @@
 using TensorKit
 using TensorOperations
 using KrylovKit
+using BenchmarkTools
 
 include("engines/DMRG_contractions.jl")
 
@@ -19,10 +20,14 @@ M = 64  # MPS bond dimension
 elemtype = Complex{Float64}
 
 println("Creation of T")
-@time T = TensorMap(randn,elemtype, 𝕄 ⊗ 𝕕 ⊗ 𝕕, 𝕄)  # the usual two-site MPS tensor
-@time Tpr = TensorMap(convert(Array, T'), 𝕄 ⊗ 𝕕 ⊗ 𝕕, 𝕄)  # the usual two-site MPS tensor
-@time T = T + Tpr  # make hermitian
-@time norm = tr(T'*T)
+@time T1 = TensorMap(randn,elemtype, 𝕄 ⊗ 𝕕, 𝕄)  # the usual single-site MPS tensor
+@time Tpr = TensorMap(convert(Array, T1'), 𝕄 ⊗ 𝕕, 𝕄)  # the usual two-site MPS tensor
+@time T1 = T1 + Tpr  # make hermitian
+@time norm = tr(T1'*T1)
+@time T1 = T1/sqrt(norm)
+
+println("Creation of T")
+@time @tensor T[-1 -2 -3; -4] = T1[-1 -2 1] * T1[1 -3 -4]
 @time T = T/sqrt(norm)
 
 println("Creation of W")
@@ -148,34 +153,33 @@ function tensorLTWWR_vec(x,L,T,W1,W2,R)  # this is good :)
     return x
 end
 
-println("L*T*W*W*R -- first ordering")
-LTWWR = tensorLTWWR1(L,T,W,W,R)
-for i = 1:10
-    @time global LTWWR = tensorLTWWR1(L,LTWWR,W,W,R)
-end
-
-println("L*T*W*W*R -- second ordering")
-LTWWR = tensorLTWWR2(L,T,W,W,R)
-for i = 1:10
-    @time global LTWWR = tensorLTWWR2(L,LTWWR,W,W,R)
-end
-
-println("L*T*W*W*R -- optimized???")
-LTWWR = tensorLTWWR_opt(L,T,W,W,R)
-for i = 1:10
-    @time global LTWWR = tensorLTWWR_opt(L,LTWWR,W,W,R)
-end
-
-# tol = 1e-15
-# maxiter = 12
-# krylovdim = 10
-
-# println("Arnoldi eigsolve")
-# solver = Arnoldi
-# for i = 1:3
-#     @time eigenVal, eigenVec = eigsolve(x->tensorLTWWR1(L,x,W,W,R),T,1,:SR,solver(tol=tol,maxiter=maxiter,krylovdim=krylovdim))
-#     println(abs(eigenVal[1]))
+# println("L*T*W*W*R -- first ordering")
+# LTWWR = tensorLTWWR1(L,T,W,W,R)
+# for i = 1:10
+#     @time global LTWWR = tensorLTWWR1(L,LTWWR,W,W,R)
 # end
+
+# println("L*T*W*W*R -- second ordering")
+# LTWWR = tensorLTWWR2(L,T,W,W,R)
+# for i = 1:10
+#     @time global LTWWR = tensorLTWWR2(L,LTWWR,W,W,R)
+# end
+
+# println("L*T*W*W*R -- optimized???")
+# LTWWR = tensorLTWWR_opt(L,T,W,W,R)
+# for i = 1:10
+#     @time global LTWWR = tensorLTWWR_opt(L,LTWWR,W,W,R)
+# end
+
+tol = 1e-15
+maxiter = 12
+krylovdim = 10
+
+println("Two-site problem")
+@btime applyH2(permute(T, (1,2,3,4), ()),L,W,W,R)
+
+println("Single-site problem")
+@btime applyH1(permute(T1, (1,2,3), ()),L,W,R)
 
 # println("Lanczos eigsolve")
 # solver = Lanczos

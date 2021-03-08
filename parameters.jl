@@ -8,9 +8,9 @@ function generateParameters()
 
     # settings related to the sweeping procedure
     # χ = [fill(χ,4) for χ in [2 4 8 16 32 64 128 256 512 1024 1024 1024]]
-    χ = [fill(χ,4) for χ in [512]]
+    χ = [fill(χ,12) for χ in [128]]
     push!(parameters, "χ" => [(χ...)...])
-    push!(parameters, "length" => 32)
+    push!(parameters, "length" => 100)
     
     # settings for the eigensolver
     push!(parameters, "solver" => Lanczos)

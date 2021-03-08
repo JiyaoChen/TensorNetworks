@@ -1,7 +1,7 @@
 # collection of necessary contractions
 include("DMRG_contractions.jl")
 
-function verbosePrint(s::Int64,i::Int64,currEigenVal::Float64,ϵ::Float64,tol::Float64,current_χ::Int64)
+function verbosePrintDMRG2(s::Int64,i::Int64,currEigenVal::Float64,ϵ::Float64,tol::Float64,current_χ::Int64)
     @info("DMRG2 -- Sweep "*string(s),i,currEigenVal,ϵ,tol,current_χ)
 end
 
@@ -52,7 +52,7 @@ function DMRG2(mps::DMRG_types.MPS, env::DMRG_types.MPOEnvironments, model::DMRG
             env.mpoEnvL[i+1] = update_EL(env.mpoEnvL[i], U, model.H.mpo[i])
             # env.mpoEnvR[i] = update_ER(env.mpoEnvR[i+1], Vdag, model.H.mpo[i+1])
 
-            verbosePrint(s,i,real(currEigenVal),ϵ[i],tol[i],current_χ[i])
+            verbosePrintDMRG2(s,i,real(currEigenVal),ϵ[i],tol[i],current_χ[i])
             
         end
 
@@ -89,7 +89,7 @@ function DMRG2(mps::DMRG_types.MPS, env::DMRG_types.MPOEnvironments, model::DMRG
             # env.mpoEnvL[i+1] = update_EL(env.mpoEnvL[i], U, model.H.mpo[i])
             env.mpoEnvR[i] = update_ER(env.mpoEnvR[i+1], Vdag, model.H.mpo[i+1])
 
-            verbosePrint(s,i,real(currEigenVal),ϵ[i],tol[i],current_χ[i])
+            verbosePrintDMRG2(s,i,real(currEigenVal),ϵ[i],tol[i],current_χ[i])
             
         end
 

@@ -1,5 +1,7 @@
 function extendSharedLink(mps1::DMRG_types.MPSTensor, mps2::DMRG_types.MPSTensor, EL::DMRG_types.MPOEnvLTensor, mpo1::DMRG_types.MPOTensor, mpo2::DMRG_types.MPOTensor, ER::DMRG_types.MPOEnvRTensor, χ::Int64, tol::Float64, dir::String)
+    
     theta = mps1 * permute(mps2, (1,), (2,3))
+    
     # get theta prime
     theta = applyH2(theta, EL, mpo1, mpo2, ER)  # bottleneck 2
 
@@ -10,7 +12,7 @@ function extendSharedLink(mps1::DMRG_types.MPSTensor, mps2::DMRG_types.MPSTensor
 
     # set U and V to zero
     U = zero(U)
-    Vdag = zero(Vdag)
+    # Vdag = zero(Vdag)
 
     # extend mps1 & mps2 with the optimal variational subspace
     mps1 = catdomain(mps1,U)
@@ -19,18 +21,17 @@ function extendSharedLink(mps1::DMRG_types.MPSTensor, mps2::DMRG_types.MPSTensor
     # mps2 = mps2 / sqrt(tr(mps2'*mps2))
 
     # the environments must be updated
-    if dir == "->"  # bottleneck 3
-        L, Q = rightorth(mps2, (1,), (2,3), alg=TensorKit.LQpos())
-        Q = permute(Q, (1,2), (3,))
-        mps2 = Q
-        mps1 = mps1 * L
-        env = update_ER(ER, mps2, mpo2)
-    else
-        Q, R = leftorth(mps1, (1,2), (3,), alg=TensorKit.QRpos())
-        mps1 = Q
-        mps2 = permute(R * permute(mps2, (1,), (2,3)), (1,2), (3,))
-        env = update_EL(EL, mps1, mpo1)
-    end
+    # if dir == "->"  # bottleneck 3
+    L, Q = rightorth(mps2, (1,), (2,3), alg=TensorKit.LQpos())
+    mps1 = mps1 * L
+    mps2 = permute(Q, (1,2), (3,))
+    env = update_ER(ER, mps2, mpo2)
+    # else
+    #     # Q, R = leftorth(mps1, (1,2), (3,), alg=TensorKit.QRpos())
+    #     # mps1 = Q
+    #     # mps2 = permute(R * permute(mps2, (1,), (2,3)), (1,2), (3,))
+    #     env = update_EL(EL, mps1, mpo1)
+    # end
 
     return mps1, mps2, env, current_χ, ϵ
 end
