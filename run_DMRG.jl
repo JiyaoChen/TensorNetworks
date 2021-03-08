@@ -38,7 +38,7 @@ Base.run(`clear`)
 
 @time mps = DMRG_types.MPS(model, init = ones)
 @time env = DMRG_types.MPOEnvironments(mps, model.H)
-@time mps = DMRG_engine.DMRG2(mps, env, model)
+@time mps = DMRG_engine.DMRG1(mps, env, model)
 
 # @time mps = DMRG_types.MPS(model, init = ones)
 # @time env = DMRG_types.MPOEnvironments(mps, model.H)

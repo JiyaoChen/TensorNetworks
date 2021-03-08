@@ -41,7 +41,7 @@ println("Creation of R")
 
 # @time @tensor trash[:] := L[-1 2 1]*T[1 3 -2 -3]*W[2 -4 -5 3]
 
-# applyH(T, L, W, W, R)
+applyH(T, L, W, W, R)
 
 println("W*W")
 @time W * W  # this is good
