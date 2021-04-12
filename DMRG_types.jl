@@ -1,6 +1,7 @@
 module DMRG_types
 
     using TensorKit
+    using KrylovKit
 
     # MPS tensors
     const GenericMPSTensor{S,N} = AbstractTensorMap{S,N,1} where {S<:EuclideanSpace,N}

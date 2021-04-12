@@ -35,6 +35,11 @@ function applyH(X, EL, mpo1, mpo2, ER)
     return Y
 end
 
+function applyH0(X, EL, ER)
+    @tensor X[-1 -2] := EL[-1 3 1] * X[1 2] * ER[2 3 -2]
+    return X
+end
+
 function applyH1(X, EL, mpo, ER)
     @tensor X[-1 -2 -3] := EL[-1 2 1] * X[1 3 4] * mpo[2 -2 5 3] * ER[4 5 -3]
     return X
@@ -42,5 +47,33 @@ end
 
 function applyH2(X, EL, mpo1, mpo2, ER)
     @tensor X[-1 -2 -3 -4] := EL[-1 2 1] * X[1 3 5 6] * mpo1[2 -2 4 3] * mpo2[4 -3 7 5] * ER[6 7 -4]
+    return X
+end
+
+function contractTWL(X, mps, mpo)
+    Y = X
+    for i = 1 : length(mps.ACs)
+        # println(i)
+        @tensor Y[-1 -2 -3] := Y[5 3 1] * mps.ACs[i][1 2 -3] * mpo[i][3 4 -2 2] * conj(mps.ACs[i][5 4 -1])
+    end
+    println(Y)
+    shiftTensor = TensorKit.isomorphism(space(Y,3)' ⊗ space(Y,3), space(X,1))
+    @tensor X[-1 -2 -3] := Y[1 -2 2] * shiftTensor[2 3 -3] * conj(shiftTensor[1 3 -1])
+
+    println(X)
+    return X
+end
+
+function contractTWR(X, mps, mpo)
+    Y = X
+    for i = length(mps.ACs) : -1 : 1
+        # println(i)
+        @tensor Y[-1 -2 -3] := mps.ACs[i][-1 2 1] * mpo[i][-2 4 3 2] * conj(mps.ACs[i][-3 4 5]) * Y[1 3 5]
+    end
+    println(Y)
+    shiftTensor = TensorKit.isomorphism(space(X,3)' ⊗ space(X,3), space(Y,1))
+    @tensor X[-1 -2 -3] := Y[2 -2 1] * shiftTensor[-1 3 2] * conj(shiftTensor[-3 3 1])
+
+    println(X)
     return X
 end

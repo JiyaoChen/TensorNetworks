@@ -104,10 +104,10 @@ function InfiniteMPS(site_tensors::Vector{A}) where {A<:MPSTensor}
     B = typeof(R);
 
     # initialize empty vectors
-    ALs = PeriodicArray{A}(undef,length(site_tensors))
-    ACs = PeriodicArray{A}(undef,length(site_tensors))
-    CMs = PeriodicArray{B}(undef,length(site_tensors))
-    ARs = PeriodicArray{A}(undef,length(site_tensors))
+    ALs = PeriodicArray{A,1}(undef,length(site_tensors))
+    ACs = PeriodicArray{A,1}(undef,length(site_tensors))
+    CMs = PeriodicArray{B,1}(undef,length(site_tensors))
+    ARs = PeriodicArray{A,1}(undef,length(site_tensors))
 
     norm = @tensor site_tensors[1][1 2 3] * conj(site_tensors[1][1 2 3])
     site_tensors[1] = site_tensors[1]/sqrt(norm)
