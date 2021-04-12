@@ -52,28 +52,26 @@ end
 
 function contractTWL(X, mps, mpo)
     Y = X
-    for i = 1 : length(mps.ACs)
-        # println(i)
-        @tensor Y[-1 -2 -3] := Y[5 3 1] * mps.ACs[i][1 2 -3] * mpo[i][3 4 -2 2] * conj(mps.ACs[i][5 4 -1])
+    @tensor Y[-1 -2 -3] := Y[5 3 1] * mps.ACs[1][1 2 -3] * mpo[1][3 4 -2 2] * conj(mps.ACs[1][5 4 -1])
+    for i = 2 : length(mps.ACs)
+        # contract all tensors in the unit cell
+        @tensor Y[-1 -2 -3] := Y[5 3 1] * mps.ARs[i][1 2 -3] * mpo[i][3 4 -2 2] * conj(mps.ARs[i][5 4 -1])
     end
-    println(Y)
+    # shift quantum numbers to original tensor
     shiftTensor = TensorKit.isomorphism(space(Y,3)' ⊗ space(Y,3), space(X,1))
     @tensor X[-1 -2 -3] := Y[1 -2 2] * shiftTensor[2 3 -3] * conj(shiftTensor[1 3 -1])
-
-    println(X)
     return X
 end
 
 function contractTWR(X, mps, mpo)
     Y = X
-    for i = length(mps.ACs) : -1 : 1
-        # println(i)
-        @tensor Y[-1 -2 -3] := mps.ACs[i][-1 2 1] * mpo[i][-2 4 3 2] * conj(mps.ACs[i][-3 4 5]) * Y[1 3 5]
+    for i = length(mps.ACs) : -1 : 2
+        # contract all tensors in the unit cell
+        @tensor Y[-1 -2 -3] := mps.ARs[i][-1 2 1] * mpo[i][-2 4 3 2] * conj(mps.ARs[i][-3 4 5]) * Y[1 3 5]
     end
-    println(Y)
+    @tensor Y[-1 -2 -3] := mps.ACs[1][-1 2 1] * mpo[1][-2 4 3 2] * conj(mps.ACs[1][-3 4 5]) * Y[1 3 5]
+    # shift quantum numbers to original tensor
     shiftTensor = TensorKit.isomorphism(space(X,3)' ⊗ space(X,3), space(Y,1))
     @tensor X[-1 -2 -3] := Y[2 -2 1] * shiftTensor[-1 3 2] * conj(shiftTensor[-3 3 1])
-
-    println(X)
     return X
 end

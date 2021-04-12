@@ -1,218 +1,104 @@
 # collection of necessary contractions
 include("DMRG_contractions.jl")
-include("iDMRG2_link_manipulations.jl")
 
-# traditional growing algorithm -- starts from scratch with a given mpo tensor and variationally searches for the (2-site periodic) MPS
-function iDMRG2(mpo::A; χ::Int64=64, systemSize::Int64=100, tol::Float64=KrylovDefaults.tol) where {A<:AbstractTensorMap{S,2,2} where {S<:EuclideanSpace}}
+function verbosePrintDMRG2(s::Int64,i::Int64,currEigenVal::Float64,ϵ::Float64,tol::Float64,current_χ::Int64,time::Float64)
+    @info("iDMRG2 -- Sweep "*string(s),i,currEigenVal,ϵ,tol,current_χ,time)
+end
 
-    numSteps = Int64(floor(systemSize/2.0))
-    systemSizeIsOdd = Bool(mod(systemSize,2))
-
-    # mpo_arr = convert(Array, mpo)
-    # mpo = TensorMap(mpo_arr, ComplexSpace(2)*ComplexSpace(5), ComplexSpace(5)*ComplexSpace(2))
+function iDMRG2(mps::DMRG_types.InfiniteMPS, env::DMRG_types.InfiniteMPOEnvironments, model::DMRG_types.Model)
     
-    # this extracts the link spaces from the MPO tensor legs
-    physSpace = space(mpo)[2]
-    mpoSpaceL = space(mpo)[3]'  # this is an incoming leg so it must be conjugated
-    mpoSpaceR = space(mpo)[1]
+    # get parameters from dict
+    χ = model.P["χ"]
+    maxiter = model.P["maxiter"]
+    krylovdim = model.P["krylovdim"]
+    solver = model.P["solver"]
 
-    # initial legs of the MPS (currently only ℤ₂ and ℂ, needs further adaption)
-    if occursin("ComplexSpace",string(typeof(physSpace)))
-        zeroIrrep = ℂ^1
-    elseif occursin("ZNIrrep{2}",string(typeof(physSpace)))
-        zeroIrrep = ℤ₂Space(0 => 1)
-        oneIrrep = ℤ₂Space(0 => 1)
-    elseif occursin("U1Irrep",string(typeof(physSpace)))
-        zeroIrrep = U1Space(0 => 1)
-        oneIrrep = U1Space(1 => 1)
-    elseif  occursin("SU2Irrep",string(typeof(physSpace)))
-        zeroIrrep = SU₂Space(0 => 1)
-        oneIrrep = SU₂Space(0 => 1)
-    end
-    mpsSpaceL = zeroIrrep
-    mpsSpaceR = oneIrrep
-    mpoSpaceI = zeroIrrep
-    mpoSpaceO = zeroIrrep
-    mpsSpaceShared = computeSharedLink(mpsSpaceL, physSpace, physSpace, mpsSpaceR)
-    
-    mpoBoundaryVecL = zeros(ComplexF64, dim(mpoSpaceL), dim(mpoSpaceI))
-    mpoBoundaryVecL[1] = 1
-    # mpoBoundaryVecL = Array{ComplexF64}([1.0 0.0]);
-    mpoBoundaryVecR = zeros(ComplexF64, dim(mpoSpaceO), dim(mpoSpaceR))
-    mpoBoundaryVecR[2] = 1
-    # mpoBoundaryVecR = Array{ComplexF64}([0.0 ; 1.0]);
-    mpoBoundaryTensL = TensorMap(mpoBoundaryVecL, mpoSpaceI, mpoSpaceL)
-    mpoBoundaryTensR = TensorMap(mpoBoundaryVecR, mpoSpaceR, mpoSpaceO)
-    # mpoBoundaryTensL = TensorMap(reshape([1 0], (1 1 2)), mpoSpaceI*mpoSpaceL, zeroIrrep)
-    # mpoBoundaryTensL = TensorMap(zeros, mpoSpaceI, mpoSpaceL)
-    # tensorDictL = convert(Dict, mpoBoundaryTensL)
-    # dataDictL = tensorDictL[:data]
-    # dataDictL["Irrep[SU₂](0)"] = Array{ComplexF64}([1.0 0.0])
-    # tensorDictL[:data] = dataDictL
-    # mpoBoundaryTensL = convert(TensorMap, tensorDictL)
+    current_χ = Array{Int64}(undef, length(mps.ARs)-1)
+    ϵ = Array{Float64}(undef, length(mps.ARs)-1)
+    tol = Array{Float64}(undef, length(mps.ARs)-1)
+    tol .= model.P["tol"] 
 
-    # mpoBoundaryTensR = TensorMap(zeros, mpoSpaceR, mpoSpaceO)
-    # tensorDictR = convert(Dict, mpoBoundaryTensR)
-    # dataDictR = tensorDictR[:data]
-    # dataDictR["Irrep[SU₂](0)"] = Array{ComplexF64}(reshape([0.0 ; 1.0], (2,1)))
-    # tensorDictR[:data] = dataDictR
-    # mpoBoundaryTensR = convert(TensorMap, tensorDictR)
-    # mpoBoundaryTensL = reshape(mpoBoundaryTensL, dim())
-    # mpoBoundaryTensL = TensorMap(mpoBoundaryTensL, space(mpoBoundaryTensL, 1), space(mpoBoundaryTensL, 2))
-    # mpoBoundaryTensR = Tensor([0 1], mpoSpaceR*mpoSpaceO)
+    for s = 1 : length(χ)
+        # left -> right sweeping
+        for i = 1 : length(mps.ARs) - 1
+            # construct initial theta
+            theta = permute(mps.ACs[i] * permute(mps.ARs[i+1], (1,), (2,3)), (1,2,3,4), ())
 
-    # initialize MPS tensors
-    T1 = TensorMap(randn, ComplexF64, mpsSpaceL ⊗ physSpace, mpsSpaceShared)
-    T2 = TensorMap(randn, ComplexF64, mpsSpaceShared ⊗ physSpace, mpsSpaceR)
+            # optimize wave function
+            elapsedTime = @elapsed eigenVal, eigenVec = 
+                eigsolve(theta,1, :SR, solver(tol=tol[i],maxiter=maxiter,krylovdim=krylovdim)) do x
+                    applyH2(x, env.mpoEnvL[i], model.H.mpo[i], model.H.mpo[i+1], env.mpoEnvR[i+1])
+                end
+            currEigenVal = eigenVal[1]
+            currEigenVec = eigenVec[1]
 
-    # initiliaze EL and ER
-    IdL = TensorMap(ones, ComplexF64, mpsSpaceL, mpoSpaceI ⊗ mpsSpaceL)
-    IdR = TensorMap(ones, ComplexF64, mpsSpaceR ⊗ mpoSpaceO, mpsSpaceR)
-    @tensor EL[-1; -2 -3] := IdL[-1 1 -3] * mpoBoundaryTensL[1 -2]
-    @tensor ER[-1 -2; -3] := mpoBoundaryTensR[-2 1] * IdR[-1 1 -3]
-    
-    # initialize array to store energy
-    groundStateEnergy = zeros(Float64, numSteps, 5)
+            # computes the overlap
+            overlap = 1 - @tensor theta[1 2 3 4] * conj(currEigenVec[1 2 3 4])
+            tol[i] = abs(overlap)
 
-    # initialize variables to be available outside of for-loop
-    ϵ = 0
-    current_χ = 0
-    currEigenVal = 0
-    currEigenVec = []
-    prevEigenVal = 0
-    prevEigenVec = []
+            #  perform SVD and truncate to desired bond dimension
+            U, S, Vdag, ϵ[i] = tsvd(currEigenVec, (1,2), (3,4), trunc = truncdim(χ[s]))
+            current_χ[i] = dim(space(S,1))
+            Vdag = permute(Vdag, (1,2), (3,))
 
-    # initialize tensorTrain
-    # tensorTrain = Vector{A}(undef,2*numSteps) where {T<:Number, S<:Array{T}}
-    # tensorTrain = Vector{A}(undef,2*numSteps) where {A<:AbstractTensorMap}
-    tensorTrain = Vector{Any}(undef,systemSize)
-    # tensorTrain = {}
+            # construct new AC
+            @tensor mps.ACs[i+1][-1 -2; -3] := S[-1 1] * Vdag[1 -2 -3];
 
-    
-    # construct initial wave function
-    theta = permute(T1 * permute(T2, (1,), (2,3)), (1,2,3), (4,))
-    Spr = TensorMap(ones, zeroIrrep, zeroIrrep);
-    # print("new guess spaces: ",space(theta),"\n")
-    # main growing loop
-    for i = 1 : numSteps
-        
-        groundStateEnergy[i,1] = i
-        
-        # store previous eivenvalue
-        prevEigenVal = currEigenVal;
+            # update tensors in mps
+            mps.ALs[i] = U
+            # mps.ARs[i+1] = Vdag
 
-        # print theta spaces
-        # print("new guess spaces: ",space(theta),"\n")
-        
-        # optimize wave function
-        eigenVal, eigenVec = 
-            eigsolve(theta,1, :SR, Arnoldi(tol=tol)) do x
-                applyH(x, EL, mpo, mpo, ER)
-            end
-        currEigenVal = eigenVal[1]
-        currEigenVec = eigenVec[1]
-        
-        #  perform SVD and truncate to desired bond dimension
-        S = Spr
-        U, Spr, Vdag, ϵ = tsvd(currEigenVec, (1,2), (3,4), trunc = truncdim(χ))
-        # U, Spr, Vdag, ϵ = tsvd(currEigenVec, (1,2), (3,4))
-        # print("spaces Spr: ",space(Spr),"\n")
-        # print("spaces Vdag: ",space(Vdag),"\n")
+            # update left environments
+            env.mpoEnvL[i+1] = update_EL(env.mpoEnvL[i], U, model.H.mpo[i])
+            # env.mpoEnvR[i] = update_ER(env.mpoEnvR[i+1], Vdag, model.H.mpo[i+1])
 
-        current_χ = dim(space(Spr,1))
-        Vdag = permute(Vdag, (1,2), (3,))
-
-        # update environments
-        EL = update_EL(EL, U, mpo)
-        ER = update_ER(ER, Vdag, mpo)
-        # print("spaces ER: ",space(ER),"\n")
-
-        # shift and obtain new guess tensor
-        if i != numSteps
-            ER = shiftVirtSpaceMPS(ER, oneIrrep)
-            theta = newGuess(oneIrrep, Spr, Vdag, S, U)
+            verbosePrintDMRG2(s,i,real(currEigenVal),ϵ[i],tol[i],current_χ[i],elapsedTime)
+            
         end
-        # theta = braid(theta, (1,3,2), (4,))
-        # theta = TensorMap(randn, space(EL,3)' ⊗ space(theta, 2) ⊗ space(theta, 3), space(ER, 1))
 
-        # calculate ground state energy
-        gsEnergy = 1/2*(currEigenVal - prevEigenVal)
+        # right -> left sweeping
+        for i = length(mps.ARs) - 1 : -1 : 1
+            # construct initial theta
+            theta = permute(mps.ALs[i] * permute(mps.ACs[i+1], (1,), (2,3)), (1,2,3,4), ())
 
-        # # calculate overlap between old and new wave function
-        # @tensor waveFuncOverlap[:] := currEigenVec[1 2 3] * conj(prevEigenVec[1 2 3]);
+            # optimize wave function
+            elapsedTime = @elapsed eigenVal, eigenVec = 
+                eigsolve(theta,1, :SR, solver(tol=tol[i],maxiter=maxiter,krylovdim=krylovdim)) do x
+                    applyH2(x, env.mpoEnvL[i], model.H.mpo[i], model.H.mpo[i+1], env.mpoEnvR[i+1])
+                end
+            currEigenVal = eigenVal[1]
+            currEigenVec = eigenVec[1]
 
-        # print simulation progress
-        @printf("%05i : E_iDMRG / Convergence / Discarded Weight / BondDim : %0.15f / %0.15f / %d \n",i,real(gsEnergy),ϵ,current_χ)
-        # print("spaces Spr: ",space(Spr),"\n")
+            # computes the overlap
+            overlap = 1 - @tensor theta[1 2 3 4] * conj(currEigenVec[1 2 3 4])
+            tol[i] = abs(overlap)
 
-        # save the tensors of the current step
-        
-        tensorTrain[i] = U
-        if i == numSteps && !systemSizeIsOdd
-            tensorTrain[i] = U*Spr
+            #  perform SVD and truncate to desired bond dimension
+            U, S, Vdag, ϵ[i] = tsvd(currEigenVec, (1,2), (3,4), trunc = truncdim(χ[s]))
+            current_χ[i] = dim(space(S,1))
+            Vdag = permute(Vdag, (1,2), (3,))
+
+            # update tensors in mps
+            # mps.ALs[i] = U
+            mps.ARs[i+1] = Vdag
+
+            # construct new AC
+            mps.ACs[i] = U * S;
+
+            # update left environments
+            # env.mpoEnvL[i+1] = update_EL(env.mpoEnvL[i], U, model.H.mpo[i])
+            env.mpoEnvR[i] = update_ER(env.mpoEnvR[i+1], Vdag, model.H.mpo[i+1])
+
+            verbosePrintDMRG2(s,i,real(currEigenVal),ϵ[i],tol[i],current_χ[i],elapsedTime)
+            
         end
-        tensorTrain[end-i+1] = Vdag
-        # shift all tensors in tensor train
-        if i != numSteps
-            for j = 1 : i
-                tensorTrain[end-j+1] = shiftVirtSpaceMPS(tensorTrain[end-j+1], oneIrrep)
-            end
+
+        println(maximum(tol))
+        println(maximum(current_χ))
+        if maximum(tol) < 1e-14 && maximum(current_χ) == maximum(χ)
+            return mps
         end
     end
 
-    # perform additional growing step
-    if systemSizeIsOdd
-        # ER = shiftVirtSpaceMPS(ER, SU2Space(1/2=>1))
-        lastvs = U1Space(1=>1)
-        ER = shiftVirtSpaceMPS(ER, lastvs)
-        for j = 1 : numSteps
-            tensorTrain[end-j+1] = shiftVirtSpaceMPS(tensorTrain[end-j+1], lastvs)
-        end
-        theta = TensorMap(randn, space(EL,3)' ⊗ space(theta, 2), space(ER, 1))
-        
-        # store previous eivenvalue
-        prevEigenVal = currEigenVal;
-        
-        # optimize wave function
-        eigenVal, eigenVec = 
-            eigsolve(theta,1, :SR, Arnoldi(tol=tol)) do x
-                applyH1(x, EL, mpo, ER)
-            end
-        currEigenVal = eigenVal[1]
-        theta = eigenVec[1]
-
-        norm = @tensor theta[1 2 3]*conj(theta[1 2 3])
-        theta = theta/norm
-        
-        #  perform SVD and truncate to desired bond dimension
-        # S = Spr
-        # U, Spr, Vdag, ϵ = tsvd(currEigenVec, (1,2), (3,), trunc = truncdim(χ))
-        # U, Spr, Vdag, ϵ = tsvd(currEigenVec, (1,2), (3,4))
-        # print("spaces Spr: ",space(Spr),"\n")
-        # print("spaces Vdag: ",space(Vdag),"\n")
-
-        # current_χ = dim(space(Spr,1))
-
-        # calculate ground state energy
-        gsEnergy = 1/2*(currEigenVal - prevEigenVal)
-
-        # # calculate overlap between old and new wave function
-        # @tensor waveFuncOverlap[:] := currEigenVec[1 2 3] * conj(prevEigenVec[1 2 3]);
-
-        # print simulation progress
-        @printf("%07.1f : E_iDMRG : %0.15f \n",systemSize/2,real(gsEnergy))
-        # print("spaces Spr: ",space(Spr),"\n")
-        tensorTrain[Int64(floor(systemSize/2+1))] = theta
-    end
-    
-    # tensorTrain[2*numSteps+1] = gammaList[1]
-    # tensorTrain[2*numSteps] = gammaList[2]
-
-    # mps = DMRG_types.MPS([tensor for tensor in tensorTrain]);
-
-    # print("spaces Spr: ",space(Spr),"\n")
-    # print("spaces ER: ",space(ER),"\n")
-
-    return tensorTrain
-    
+    return mps
 end

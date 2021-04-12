@@ -1,4 +1,3 @@
-
 push!(LOAD_PATH, pwd())
 
 using DMRG_types
@@ -28,7 +27,7 @@ Base.run(`clear`)
 # @time mps = DMRG_engine.DMRG2(mps, env, model)
 
 
-
+# 
 ### U1
 @time parameters = generateParameters()
 @time hamiltonian = generateHeisenbergU1(parameters)
@@ -40,8 +39,16 @@ Base.run(`clear`)
 # @time env = DMRG_types.MPOEnvironments(mps, model.H)
 # @time mps = DMRG_engine.DMRG1(mps, env, model)
 
-@time mps = DMRG_types.InfiniteMPS(model, init = ones)
+@time mps = DMRG_types.InfiniteMPS(model, init = randn)
 @time env = DMRG_types.InfiniteMPOEnvironments(mps, model.H)
+
+@time mps = DMRG_engine.iDMRG2(mps, env, model)
+@time env = DMRG_types.InfiniteMPOEnvironments(mps, model.H)
+@time mps = DMRG_engine.iDMRG2(mps, env, model)
+@time env = DMRG_types.InfiniteMPOEnvironments(mps, model.H)
+@time mps = DMRG_engine.iDMRG2(mps, env, model)
+@time env = DMRG_types.InfiniteMPOEnvironments(mps, model.H)
+@time mps = DMRG_engine.iDMRG2(mps, env, model)
 
 # @time mps = DMRG_types.MPS(model, init = ones)
 # @time env = DMRG_types.MPOEnvironments(mps, model.H)

@@ -128,9 +128,11 @@ function InfiniteMPS(site_tensors::Vector{A}) where {A<:MPSTensor}
     CMs[end] = L
     ARs[1] = permute(QR, (1,2), (3,))
     ALs[1] = QL
-    ARs[2:end] .= site_tensors[2:end]
+    ARs[2:end] = site_tensors[2:end]
+
+    print(site_tensors[2])
 
     # call the default constructor and assign its attributes
-    InfiniteMPS{A,B}(ALs, ACs, CMs, ARs)
+    InfiniteMPS{A,B}(ALs, ARs, CMs, ACs)
 
 end
