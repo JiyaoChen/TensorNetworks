@@ -44,7 +44,7 @@ function rightEnv(MPS, MPO, FR = TensorMap(randn, ComplexF64, space(MPS,1) ⊗ s
     return FRs[1], real(λs[1]), info
 end
 
-function optimalSubSpaceExpansion(AL, C, AR, MPO, FL, FR, chiE, tol; kwargs...)
+function optimalSubSpaceExpansion(AL, C, AR, MPO, FL, FR, chiE, tol::Float64; kwargs...)
 
     # construct tensor A2C
     @tensor AC[-1 -2; -3] := AL[-1 -2 1] * C[1 -3];
@@ -97,7 +97,7 @@ function vumps(MPS, MPO, chiE; verbose = true, tol = 1e-6, kwargs...)
     verbose && println("Starting point has λ ≈ $λL ≈ $λR")
 
     # make optimization step
-    λ, AL, C, AR, = vumpsstep(AL, C, AR, MPO, FL, FR; tol = tol/10)
+    λ, AL, C, AR, = vumpsstep(AL, C, AR, MPO, FL, FR; tol = tol)
     # AL, C, = leftorth(AR, C; tol = tol/10, kwargs...) # regauge MPS: not really necessary
 
     # make an optimal subspace expansion
@@ -121,13 +121,13 @@ function vumps(MPS, MPO, chiE; verbose = true, tol = 1e-6, kwargs...)
     i = 1
     verbose && @printf("Step %d: λL ≈ %0.15f, λR ≈ %0.15f, err ≈ %0.15f\n", i, λL, λR, err)
     while err > tol
-
+        tol = minimum([tol, err/10])
         # make optimization step
-        λ, AL, C, AR, = vumpsstep(AL, C, AR, MPO, FL, FR; tol = tol/10)
+        λ, AL, C, AR, = vumpsstep(AL, C, AR, MPO, FL, FR; tol = tol)
         # AL, C, = leftorth(AR, C; tol = tol/10, kwargs...) # regauge MPS: not really necessary
 
         # make an optimal subspace expansion
-        AL, C, AR, FL, FR = optimalSubSpaceExpansion(AL, C, AR, MPO, FL, FR, tol);
+        @time AL, C, AR, FL, FR = optimalSubSpaceExpansion(AL, C, AR, MPO, FL, FR, chiE, tol);
 
         # compute environments
         # FL, λL = leftEnv(AL, MPO, FL; tol = tol/10, kwargs...)

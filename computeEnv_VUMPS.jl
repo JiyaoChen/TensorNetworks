@@ -13,7 +13,7 @@ Base.run(`clear`)
 chiB = 2;
 
 # set betaT
-betaT = 1.0;
+betaT = 1;
 
 # rescale Bessel factors
 doRescaling = 0;
@@ -121,13 +121,13 @@ tensorPartitionFunction = convert(TensorMap, tensorDictPartitionFunction);
 # find fixed-point for linear transfer matrix T
 #---------------------------------------------------------------------------------------------------------------------------------------
 
-include("mps.jl")
+include("vumps.jl")
 
-chiE = 50;
+chiE = 11;
 vecSpaceMPS_N = SU2Space(0 => 1);
 MPS = TensorMap(randn, ComplexF64, vecSpaceMPS_N ⊗ vecSpaceVirt, vecSpaceMPS_N);
 MPO = tensorPartitionFunction;
-λ, AL, C, AR, FL, FR = vumps(MPS, MPO, chiE; tol = 1e-10);
+λ, AL, C, AR, FL, FR = vumps(MPS, MPO, chiE; tol = 1e-6);
 
 println(space(C))
 
