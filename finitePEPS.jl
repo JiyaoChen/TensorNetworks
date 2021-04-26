@@ -6,7 +6,7 @@ using TensorKit
 include("models/getSpinOperators.jl")
 include("computeEnvironmentFinitePEPS.jl")
 include("computeEnvironmentFinitePEPS_PEPO.jl")
-include("computeSingleSiteExpVal.jl")
+include("expectationValues_finitePEPS.jl")
 include("initializeFinitePEPS.jl")
 
 # clear console
@@ -44,15 +44,21 @@ finitePEPS = initializeFinitePEPS(Lx, Ly, vecSpacePhys, vecSpaceVirt, vecSpaceTr
 # redFinitePEPS = computeReducedTensors(finitePEPS);
 
 # set environment bond dimension
-chiE = 10;
-@time envTensors = computeEnvironmentFinitePEPS_PEPO(finitePEPS, finitePEPO, chiE);
+chiE = 100;
+# @time envTensors_NORM = computeEnvironmentFinitePEPS(finitePEPS, chiE);
+@time envTensors_PEPO = computeEnvironmentFinitePEPS_PEPO(finitePEPS, finitePEPO, chiE);
 
 # println(envTensors[1,2])
 
+checkContractions = 2;
 for idx = 1 : Lx, idy = 1 : Ly
-    # println([idx , idy])
-    expVal = computeSingleSiteExpVal(finitePEPS[idx,idy], envTensors[idx,idy]);
-    println(expVal)
+    if checkContractions == 1
+        expVal_N = computeSingleSiteExpVal(finitePEPS[idx,idy], envTensors[idx,idy]);
+        println(expVal_N)
+    elseif checkContractions == 2
+        expVal_P = computeSingleSiteExpVal_PEPO(finitePEPS[idx,idy], finitePEPO[idx,idy], envTensors[idx,idy]);
+        println(expVal_P)
+    end
 end
 
 # for idx = 1, idy = 3
