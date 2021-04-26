@@ -10,7 +10,10 @@ function generateParameters()
     # χ = [fill(χ,4) for χ in [2 4 8 16 32 64 128 256 512 1024 1024 1024]]
     χ = [fill(χ,2) for χ in [128]]
     push!(parameters, "χ" => [(χ...)...])
-    push!(parameters, "length" => 2)
+    push!(parameters, "length" => 3)
+
+    push!(parameters, "Lx" => 3)
+    push!(parameters, "Ly" => 2)
     
     # settings for the eigensolver
     push!(parameters, "solver" => Lanczos)

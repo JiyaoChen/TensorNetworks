@@ -1,4 +1,4 @@
-function computeEnvironmentFinitePEPS(finitePEPS, chiE)
+function computeEnvironmentFinitePEPS(finitePEPSKet, finitePEPSBra, chiE)
 
     # get size of finitePEPS
     (Lx, Ly) = size(finitePEPS);
@@ -12,7 +12,7 @@ function computeEnvironmentFinitePEPS(finitePEPS, chiE)
         for idy = 1 : Ly
             
             # get PEPS tensor
-            bulkTensor = finitePEPS[idx, idy];
+            bulkTensor = finitePEPSKet[idx, idy];
 
             # initialize CTM tensors
             C1 = TensorMap(ones, vecSpaceTriv, vecSpaceTriv);
@@ -49,7 +49,7 @@ function computeEnvironmentFinitePEPS(finitePEPS, chiE)
 
             @tensor boundaryMPS[1][-1; -2 -3 -4] := envTensors[idx - 1,1][8][-1 -2 -3 1] * rowEnvironments_U[idx - 1][1][1 -4];
             for idy = 1 : Ly
-                @tensor boundaryMPS[idy + 1][-1 -2 -3 -4 -5; -6 -7 -8] := finitePEPS[idx - 1,idy][-2 -4 2 -7 3] * conj(finitePEPS[idx - 1,idy][-3 -5 2 -6 1]) * rowEnvironments_U[idx - 1][idy + 1][-1 3 1 -8];
+                @tensor boundaryMPS[idy + 1][-1 -2 -3 -4 -5; -6 -7 -8] := finitePEPSKet[idx - 1,idy][-2 -4 2 -7 3] * conj(finitePEPSBra[idx - 1,idy][-3 -5 2 -6 1]) * rowEnvironments_U[idx - 1][idy + 1][-1 3 1 -8];
             end
             @tensor boundaryMPS[Ly + 2][-1 -2 -3 -4; ()] := envTensors[idx - 1,Ly][4][-2 -3 -4 1] * rowEnvironments_U[idx - 1][Ly + 2][-1 1];
             
@@ -103,7 +103,7 @@ function computeEnvironmentFinitePEPS(finitePEPS, chiE)
 
             @tensor boundaryMPS[1][(); -1 -2 -3 -4] := rowEnvironments_D[idx + 1][1][1 -1] * envTensors[idx + 1,1][8][1 -2 -3 -4];
             for idy = 1 : Ly
-                @tensor boundaryMPS[idy + 1][-1 -2 -3; -4 -5 -6 -7 -8] := rowEnvironments_D[idx + 1][idy + 1][-3 -4 1 3] * finitePEPS[idx + 1,idy][-1 3 2 -6 -8] * conj(finitePEPS[idx + 1,idy][-2 1 2 -5 -7]);
+                @tensor boundaryMPS[idy + 1][-1 -2 -3; -4 -5 -6 -7 -8] := rowEnvironments_D[idx + 1][idy + 1][-3 -4 1 3] * finitePEPSKet[idx + 1,idy][-1 3 2 -6 -8] * conj(finitePEPSBra[idx + 1,idy][-2 1 2 -5 -7]);
             end
             @tensor boundaryMPS[Ly + 2][-1 -2 -3; -4] := rowEnvironments_D[idx + 1][Ly + 2][-3 1] * envTensors[idx + 1,Ly][4][-1 -2 1 -4];
 
@@ -157,7 +157,7 @@ function computeEnvironmentFinitePEPS(finitePEPS, chiE)
             else
 
                 @tensor boundaryMPS[1][-1 -2 -3; -4] := colEnvironments_L[idy - 1][1][-1 1] * rowEnvironments_U[idx][idy][1 -2 -3 -4];
-                @tensor boundaryMPS[2][-1 -2 -3; -4 -5 -6 -7 -8] := colEnvironments_L[idy - 1][2][-1 1 3 -8] * finitePEPS[idx,idy - 1][3 -2 2 -5 -7] * conj(finitePEPS[idx,idy - 1][1 -3 2 -4 -6]);
+                @tensor boundaryMPS[2][-1 -2 -3; -4 -5 -6 -7 -8] := colEnvironments_L[idy - 1][2][-1 1 3 -8] * finitePEPSKet[idx,idy - 1][3 -2 2 -5 -7] * conj(finitePEPSBra[idx,idy - 1][1 -3 2 -4 -6]);
                 @tensor boundaryMPS[3][(); -1 -2 -3 -4] := colEnvironments_L[idy - 1][3][1 -4] * rowEnvironments_D[idx][idy][1 -1 -2 -3];
 
                 # use SVD to compress boundaryMPS
@@ -197,7 +197,7 @@ function computeEnvironmentFinitePEPS(finitePEPS, chiE)
             else
 
                 @tensor boundaryMPS[1][-1 -2 -3 -4; ()] := rowEnvironments_U[idx][idy + 2][-1 -2 -3 1] * colEnvironments_R[idy + 1][1][1 -4];
-                @tensor boundaryMPS[2][-1 -2 -3 -4 -5; -6 -7 -8] := finitePEPS[idx,idy + 1][-1 -3 2 3 -8] * conj(finitePEPS[idx,idy + 1][-2 -4 2 1 -7]) * colEnvironments_R[idy + 1][2][3 1 -5 -6];
+                @tensor boundaryMPS[2][-1 -2 -3 -4 -5; -6 -7 -8] := finitePEPSKet[idx,idy + 1][-1 -3 2 3 -8] * conj(finitePEPSBra[idx,idy + 1][-2 -4 2 1 -7]) * colEnvironments_R[idy + 1][2][3 1 -5 -6];
                 @tensor boundaryMPS[3][-1; -2 -3 -4] := rowEnvironments_D[idx][idy + 2][-1 1 -3 -4] * colEnvironments_R[idy + 1][3][1 -2];
 
                 # use SVD to compress boundaryMPS

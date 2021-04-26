@@ -21,16 +21,22 @@ Base.run(`clear`)
 const PEPSType{S} = AbstractTensorMap{S,3,2} where {S<:EuclideanSpace}
 const RedPEPSType{S} = AbstractTensorMap{S,2,2} where {S<:EuclideanSpace}
 
-physicalSpin = 1/2;
+include("parameters.jl")
+include("constructPEPO.jl")
+
+@time P = generateParameters()
+pepo = constructPEPOIsing(P)
+
+physicalSpin = P["spin"];
 d = Int(2 * physicalSpin + 1);
 vecSpacePhys = ℂ^d;
 vecSpaceTriv = ℂ^1;
-vecSpaceVirt = ℂ^6;
+vecSpaceVirt = ℂ^2;
 # PEPSTensor = TensorMap(randn, ℂ^1 ⊗ ℂ^2 ⊗ ℂ^3, ℂ^4 ⊗ ℂ^5);
 
 # initialize PEPS network
-Lx = 3;
-Ly = 3;
+Lx = P["Lx"];
+Ly = P["Ly"];
 finitePEPS = initializeFinitePEPS(Lx, Ly, vecSpacePhys, vecSpaceVirt, vecSpaceTriv);
 
 # # compute reduced tensors
@@ -38,7 +44,7 @@ finitePEPS = initializeFinitePEPS(Lx, Ly, vecSpacePhys, vecSpaceVirt, vecSpaceTr
 
 # set environment bond dimension
 chiE = 10;
-@time envTensors = computeEnvironmentFinitePEPS(finitePEPS,chiE);
+@time envTensors = computeEnvironmentFinitePEPS(finitePEPS, finitePEPS, chiE);
 
 # println(envTensors[1,2])
 
