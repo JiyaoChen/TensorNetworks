@@ -13,7 +13,7 @@ function generateParameters()
     push!(parameters, "length" => 3)
 
     push!(parameters, "Lx" => 3)
-    push!(parameters, "Ly" => 2)
+    push!(parameters, "Ly" => 3)
     
     # settings for the eigensolver
     push!(parameters, "solver" => Lanczos)

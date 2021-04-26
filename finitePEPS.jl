@@ -5,6 +5,7 @@ using TensorKit
 
 include("models/getSpinOperators.jl")
 include("computeEnvironmentFinitePEPS.jl")
+include("computeEnvironmentFinitePEPS_PEPO.jl")
 include("computeSingleSiteExpVal.jl")
 include("initializeFinitePEPS.jl")
 
@@ -25,7 +26,7 @@ include("parameters.jl")
 include("constructPEPO.jl")
 
 @time P = generateParameters()
-pepo = constructPEPOIsing(P)
+finitePEPO = constructPEPOIsing(P)
 
 physicalSpin = P["spin"];
 d = Int(2 * physicalSpin + 1);
@@ -44,15 +45,16 @@ finitePEPS = initializeFinitePEPS(Lx, Ly, vecSpacePhys, vecSpaceVirt, vecSpaceTr
 
 # set environment bond dimension
 chiE = 10;
-@time envTensors = computeEnvironmentFinitePEPS(finitePEPS, finitePEPS, chiE);
+@time envTensors = computeEnvironmentFinitePEPS_PEPO(finitePEPS, finitePEPO, chiE);
 
 # println(envTensors[1,2])
 
 for idx = 1 : Lx, idy = 1 : Ly
     # println([idx , idy])
-    expVal = computeSingleSiteExpVal(finitePEPS[idx,idy],envTensors[idx,idy]);
+    expVal = computeSingleSiteExpVal(finitePEPS[idx,idy], envTensors[idx,idy]);
     println(expVal)
 end
+
 # for idx = 1, idy = 3
 #     println(finitePEPS[idx,idy],"\n")
 #     envT = envTensors[idx,idy];
@@ -60,3 +62,5 @@ end
 #         println(envT[ide],"\n")
 #     end
 # end
+
+0;

@@ -1,38 +1,12 @@
+include("initializeEnvironmentTensors.jl")
+
 function computeEnvironmentFinitePEPS_PEPO(finitePEPS, finitePEPO, chiE)
 
     # get size of finitePEPS
     Lx, Ly = size(finitePEPS);
 
-    # vectorSpace along the perimeter
-    vecSpaceTriv = ℂ^1;
-
-    # vectorSpace for PEPO
-    vecSpacePEPO = ℂ^3; 
-
     # initialize CTM tensors around the finitePEPS circumference
-    envTensors = Array{Array{Any,1},2}(undef, Lx, Ly);
-    for idx = 1 : Lx
-        for idy = 1 : Ly
-            
-            # get PEPS tensor
-            bulkTensor = finitePEPS[idx, idy];
-
-            # initialize CTM tensors
-            C1 = TensorMap(ones, vecSpaceTriv, vecSpaceTriv);
-            T1 = TensorMap(ones, vecSpaceTriv ⊗ space(bulkTensor,5)' ⊗ vecSpacePEPO ⊗ space(bulkTensor,5), vecSpaceTriv);
-            C2 = TensorMap(ones, vecSpaceTriv ⊗ vecSpaceTriv, one(vecSpaceTriv));
-            T2 = TensorMap(ones, space(bulkTensor,4)' ⊗ vecSpacePEPO ⊗ space(bulkTensor,4) ⊗ vecSpaceTriv, vecSpaceTriv);
-            C3 = TensorMap(ones, vecSpaceTriv, vecSpaceTriv);
-            T3 = TensorMap(ones, vecSpaceTriv, vecSpaceTriv ⊗ space(bulkTensor,2)' ⊗ vecSpacePEPO ⊗ space(bulkTensor,2));
-            C4 = TensorMap(ones, one(vecSpaceTriv), vecSpaceTriv ⊗ vecSpaceTriv);
-            T4 = TensorMap(ones, vecSpaceTriv, space(bulkTensor,1)' ⊗ vecSpacePEPO ⊗ space(bulkTensor,1) ⊗ vecSpaceTriv);
-            
-            # store CTM tensors
-            envTensors[idx,idy] = [C1, T1, C2, T2, C3, T3, C4, T4];
-
-        end
-    end
-
+    envTensors = initializeEnvironmentTensors(finitePEPS, finitePEPO);
 
     # compute effective environments using boundary MPS methods from above
     rowEnvironments_U = Array{Array{Any,1},1}(undef, Lx);
@@ -51,10 +25,10 @@ function computeEnvironmentFinitePEPS_PEPO(finitePEPS, finitePEPO, chiE)
         else
 
             @tensor boundaryMPS[1][-1; -2 -3 -4 -5] := envTensors[idx - 1,1][8][-1 -2 -3 -4 1] * rowEnvironments_U[idx - 1][1][1 -5];
-            for idy = 1 : Ly - 1
+            for idy = 1 : Ly
                 @tensor boundaryMPS[idy + 1][-1 -2 -3 -4 -5 -6 -7; -8 -9 -10 -11] := finitePEPS[idx - 1,idy][-2 -5 4 -10 5] * finitePEPO[idx - 1,idy][-3 -6 2 -9 3 4] * conj(finitePEPS[idx - 1,idy][-4 -7 2 -8 1]) * rowEnvironments_U[idx - 1][idy + 1][-1 5 3 1 -11];
             end
-            @tensor boundaryMPS[Ly + 2][-1 -2 -3 -4 -5; ()] := envTensors[idx - 1,Ly][4][-2 -3 -4 1] * rowEnvironments_U[idx - 1][Ly + 2][-1 1];
+            @tensor boundaryMPS[Ly + 2][-1 -2 -3 -4 -5; ()] := envTensors[idx - 1,Ly][4][-2 -3 -4 -5 1] * rowEnvironments_U[idx - 1][Ly + 2][-1 1];
             
             # use SVD to compress boundaryMPS
             for idy = 1 : Ly + 1
@@ -213,7 +187,7 @@ function computeEnvironmentFinitePEPS_PEPO(finitePEPS, finitePEPO, chiE)
 
                 @tensor twoSite[-1 -2 -3 -4; -5] := boundaryMPS[2][-1 -2 -3 1 2 3 4 -5] * boundaryMPS[3][-4 4 3 2 1];
                 U, S, V, ϵ = tsvd(twoSite, (5,1,2,3), (4,), trunc = truncdim(chiE));
-                @tensor newU[-1 -2 -3; -4] := permute(U, (2,3,4,5), (1,))[-1 -2 -3 1 -5] * sqrt(S)[1 -4];
+                @tensor newU[-1 -2 -3 -4; -5] := permute(U, (2,3,4,5), (1,))[-1 -2 -3 1 -5] * sqrt(S)[1 -4];
                 @tensor newV[-1; -2]:= sqrt(S)[-2 1] * permute(V, (2,), (1,))[-1 1];
                 boundaryMPS[2] = newU;
                 boundaryMPS[3] = newV;
