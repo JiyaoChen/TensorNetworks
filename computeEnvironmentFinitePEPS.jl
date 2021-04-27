@@ -1,35 +1,12 @@
-function computeEnvironmentFinitePEPS(finitePEPSKet, finitePEPSBra, chiE)
+include("environments_finitePEPS.jl")
+
+function computeEnvironmentFinitePEPS_NORM(finitePEPSKet, finitePEPSBra, chiE)
 
     # get size of finitePEPS
     (Lx, Ly) = size(finitePEPS);
 
-    # initialize vectorSpace along the perimeter
-    vecSpaceTriv = ℂ^1;
-
     # initialize CTM tensors around the finitePEPS circumference
-    envTensors = Array{Array{Any,1},2}(undef, Lx, Ly);
-    for idx = 1 : Lx
-        for idy = 1 : Ly
-            
-            # get PEPS tensor
-            bulkTensor = finitePEPSKet[idx, idy];
-
-            # initialize CTM tensors
-            C1 = TensorMap(ones, vecSpaceTriv, vecSpaceTriv);
-            T1 = TensorMap(ones, vecSpaceTriv ⊗ space(bulkTensor,5)' ⊗ space(bulkTensor,5), vecSpaceTriv);
-            C2 = TensorMap(ones, vecSpaceTriv ⊗ vecSpaceTriv, one(vecSpaceTriv));
-            T2 = TensorMap(ones, space(bulkTensor,4)' ⊗ space(bulkTensor,4) ⊗ vecSpaceTriv, vecSpaceTriv);
-            C3 = TensorMap(ones, vecSpaceTriv, vecSpaceTriv);
-            T3 = TensorMap(ones, vecSpaceTriv, vecSpaceTriv ⊗ space(bulkTensor,2)' ⊗ space(bulkTensor,2));
-            C4 = TensorMap(ones, one(vecSpaceTriv), vecSpaceTriv ⊗ vecSpaceTriv);
-            T4 = TensorMap(ones, vecSpaceTriv, space(bulkTensor,1)' ⊗ space(bulkTensor,1) ⊗ vecSpaceTriv);
-            
-            # store CTM tensors
-            envTensors[idx,idy] = [C1, T1, C2, T2, C3, T3, C4, T4];
-
-        end
-    end
-
+    envTensors = initializeEnvironmentTensors_NORM(finitePEPSKet);
 
     # compute effective environments using boundary MPS methods from above
     rowEnvironments_U = Array{Array{Any,1},1}(undef, Lx);

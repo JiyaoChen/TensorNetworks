@@ -48,6 +48,25 @@ function constructPEPOHeisenberg(P::Dict)
     return pepos
 end
 
+function constructPEPOIdentity(P::Dict)
+    Sx, Sy, Sz, Id, Sm, Sp = getSpinOperators(P["spin"])
+    # set vector spaces
+    vP = ℂ^Int64(floor(real(2*P["spin"]+1)))
+    vM = ℂ^1
+
+    # get spin operators
+    Sx, Sy, Sz, Id, Sm, Sp = getSpinOperators(P["spin"])
+
+    # fill in pepos
+    pepos = Array{Any}(undef,P["Lx"],P["Ly"])
+    for idx=1:size(pepos,1), idy=1:size(pepos,2)
+        ham_arr = zeros(P["eltype"], dim(vM), dim(vM), dim(vP), dim(vM), dim(vM), dim(vP))
+        ham_arr[1,1,:,1,1,:] = Id
+        pepos[idx, idy] = TensorMap(ham_arr, vM ⊗ vM ⊗ vP, vM ⊗ vM ⊗ vP)
+    end
+    return pepos
+end
+
 function constructPEPOIsing(P::Dict)
     Sx, Sy, Sz, Id, Sm, Sp = getSpinOperators(P["spin"])
     # set vector spaces

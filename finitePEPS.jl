@@ -1,13 +1,15 @@
 
-# using MPSKit
-using TensorKit
+using Arpack
+using IterativeSolvers
+using LinearMaps
+using TensorKit: ⊗
 
 
 include("models/getSpinOperators.jl")
 include("computeEnvironmentFinitePEPS.jl")
 include("computeEnvironmentFinitePEPS_PEPO.jl")
 include("expectationValues_finitePEPS.jl")
-include("initializeFinitePEPS.jl")
+include("environments_finitePEPS.jl")
 
 # clear console
 Base.run(`clear`)
@@ -22,11 +24,13 @@ Base.run(`clear`)
 const PEPSType{S} = AbstractTensorMap{S,3,2} where {S<:EuclideanSpace}
 const RedPEPSType{S} = AbstractTensorMap{S,2,2} where {S<:EuclideanSpace}
 
-include("parameters.jl")
 include("constructPEPO.jl")
+include("parameters.jl")
+include("engines/PEPS_contractions.jl")
 
 @time P = generateParameters()
 finitePEPO = constructPEPOIsing(P)
+finitePEPO = constructPEPOIdentity(P)
 
 physicalSpin = P["spin"];
 d = Int(2 * physicalSpin + 1);
@@ -44,29 +48,60 @@ finitePEPS = initializeFinitePEPS(Lx, Ly, vecSpacePhys, vecSpaceVirt, vecSpaceTr
 # redFinitePEPS = computeReducedTensors(finitePEPS);
 
 # set environment bond dimension
-chiE = 100;
-# @time envTensors_NORM = computeEnvironmentFinitePEPS(finitePEPS, chiE);
+chiE = P["χ"][1];
+@time envTensors_NORM = computeEnvironmentFinitePEPS_NORM(finitePEPS, finitePEPS, chiE);
 @time envTensors_PEPO = computeEnvironmentFinitePEPS_PEPO(finitePEPS, finitePEPO, chiE);
 
-# println(envTensors[1,2])
 
-checkContractions = 2;
-for idx = 1 : Lx, idy = 1 : Ly
-    if checkContractions == 1
-        expVal_N = computeSingleSiteExpVal(finitePEPS[idx,idy], envTensors[idx,idy]);
-        println(expVal_N)
-    elseif checkContractions == 2
-        expVal_P = computeSingleSiteExpVal_PEPO(finitePEPS[idx,idy], finitePEPO[idx,idy], envTensors[idx,idy]);
-        println(expVal_P)
-    end
+pepsTensor = finitePEPS[1,1]
+pepoTensor = finitePEPO[1,1]
+pepsTensorSize = dim(pepsTensor)
+
+applyPEPO_OneSiteLM = LinearMap(pepsTensorSize) do pepsTensor
+    return applyPEPO_OneSite(pepsTensor, pepoTensor, envTensors_PEPO)
 end
 
-# for idx = 1, idy = 3
-#     println(finitePEPS[idx,idy],"\n")
-#     envT = envTensors[idx,idy];
-#     for ide = 1 : length(envT)
-#         println(envT[ide],"\n")
-#     end
+applyNORM_OneSiteLM = LinearMap(pepsTensorSize) do pepsTensor
+    return applyNORM_OneSite(pepsTensor, envTensors_NORM)
+end
+
+pepsTensor = applyNORM_OneSite(pepsTensor, envTensors_NORM[1,1]);
+pepsTensor = permute(pepsTensor, (1,2,3), (4,5));
+pepsTensor = applyPEPO_OneSite(pepsTensor, pepoTensor, envTensors_PEPO[1,1]);
+pepsTensor = permute(pepsTensor, (1,2,3), (4,5));
+
+# r = lobpcg(applyNORM_OneSiteLM, false, 1)
+# println(r.λ, r.X)
+
+# # println(envTensors[1,2])
+
+# checkContractions = 2;
+# for idx = 1 : Lx, idy = 1 : Ly
+#     # if checkContractions == 1
+#         expVal_N = computeSingleSiteExpVal(finitePEPS[idx,idy], envTensors_NORM[idx,idy]);
+#         println(expVal_N)
+#     # elseif checkContractions == 2
+#         expVal_P = computeSingleSiteExpVal_PEPO(finitePEPS[idx,idy], finitePEPO[idx,idy], envTensors_PEPO[idx,idy]);
+#         println(expVal_P)
+#     # end
 # end
 
-0;
+# 0;
+
+# fA = LinearMap(10; issymmetric=true, isposdef=true) do x
+#     return A*x
+# end
+
+# fB = LinearMap(10; issymmetric=true, isposdef=true) do x
+#     return B*x
+# end
+
+# mapNORM = LinearMap
+
+# x₀ = rand(10)
+# # @time λ,ϕ = eigs(fA, fB, nev = 1, which = :LM, v0 = x₀)
+
+# r = lobpcg(fA, fB, false, 1)
+# println(r.λ, r.X)
+# @time λ,ϕ = geneigsolve(x₀, 1, :LM; ishermitian = true, isposdef = true) do x f(x,A,B) end
+# λ,ϕ = KrylovKit.geneigsolve(x₀, 1, :LM) do x f(x) end,

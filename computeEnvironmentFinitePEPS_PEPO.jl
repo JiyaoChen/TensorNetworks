@@ -1,4 +1,4 @@
-include("initializeEnvironmentTensors.jl")
+include("environments_finitePEPS.jl")
 
 function computeEnvironmentFinitePEPS_PEPO(finitePEPS, finitePEPO, chiE)
 
