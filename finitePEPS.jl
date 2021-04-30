@@ -2,7 +2,7 @@
 using Arpack
 using IterativeSolvers
 using LinearMaps
-using TensorKit: ⊗
+using TensorKit
 
 
 include("models/getSpinOperators.jl")
@@ -10,6 +10,7 @@ include("computeEnvironmentFinitePEPS.jl")
 include("computeEnvironmentFinitePEPS_PEPO.jl")
 include("expectationValues_finitePEPS.jl")
 include("environments_finitePEPS.jl")
+include("initializeFinitePEPS.jl")
 
 # clear console
 Base.run(`clear`)

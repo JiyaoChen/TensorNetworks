@@ -6,7 +6,7 @@ function computeEnvironmentFinitePEPS_PEPO(finitePEPS, finitePEPO, chiE)
     Lx, Ly = size(finitePEPS);
 
     # initialize CTM tensors around the finitePEPS circumference
-    envTensors = initializeEnvironmentTensors(finitePEPS, finitePEPO);
+    envTensors = initializeEnvironmentTensors_PEPO(finitePEPS, finitePEPO);
 
     # compute effective environments using boundary MPS methods from above
     rowEnvironments_U = Array{Array{Any,1},1}(undef, Lx);
