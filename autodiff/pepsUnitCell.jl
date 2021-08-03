@@ -28,6 +28,10 @@ function getCoordinates(latticeIdx, Lx, latticeIdy, Ly, unitCellLayout)
 
 end
 
+function getTensorDict(unitCell::pepsUnitCell)
+    return unitCell.tensorDict;
+end
+
 Base.similar(UC::pepsUnitCell) = pepsUnitCell(UC.Lx, UC.Ly, typeof(UC.tensorDict)(), UC.unitCellLayout)
 
 function Base.getindex(UC::pepsUnitCell, latticeIdx::T, latticeIdy::T) where T <: Integer

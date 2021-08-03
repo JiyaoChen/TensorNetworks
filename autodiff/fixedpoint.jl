@@ -1,8 +1,6 @@
 
 using IterTools: iterated
 
-# function CTMRGStep(C1, T1, C2, T2, C3, T3, C4, T4, (iPEPS, chiE, truncBelowE, d))
-
 function fixedPoint(f, guess, init, stopFunc)
     for state in iterated(x -> f(x, init), guess)
         stopFunc(state) && return state
@@ -14,15 +12,16 @@ mutable struct StopFunction{T,S}
     counter::Int
     tol::S
     maxit::Int
+    chiE::Int
 end
 
-# @Zygote.nograd StopFunction
-function (st::StopFunction)(state)
-    # @info state
-    st.counter += 1
-    st.counter > st.maxit && return true
+@Zygote.nograd StopFunction
+function (stopFunc::StopFunction)(state)
+    
+    stopFunc.counter += 1
+    stopFunc.counter > stopFunc.maxit && return true
 
-    chiE = size(state[9], 4);
+    chiE = stopFunc.chiE;
     C1, C2, C3, C4 = state[[1, 3, 5, 7]];
     
     newSingularValues = zeros(Float64, C1.Lx, C1.Ly, 4, chiE);
@@ -39,23 +38,49 @@ function (st::StopFunction)(state)
     end
 
     # vals = state[3]
-    diff = norm(newSingularValues - st.oldvals)
-    println(diff)
-    diff <= st.tol && return true
-    st.oldvals = newSingularValues
+    diff = norm(newSingularValues - stopFunc.oldvals)
+    @printf("convergence CTMRG : %0.6e\n", diff)
+    diff <= stopFunc.tol && return true
+    stopFunc.oldvals = newSingularValues
 
     return false
 end
 
-# function f(x)
+#=
+    define custom adjoint for reverse-mode AD through fixed point CTMRG routine
+=#
 
-#     y = x[3];
-#     return (x[1], x[2], y^2 - 3*y + 4)
+# fixedpointbackward(next, (c,t,vals), (a, χ, d))
 
-# end
+function fixedPointBackward(next, CTMRGTensors, (iPEPS, chiE, truncBelowE))
+    
+    _, back = Zygote.pullback(next, CTMRGTensors, (iPEPS, chiE, truncBelowE));
+    back1 = x -> back(x)[1];
+    back2 = x -> back(x)[2];
 
-# stopFun = StopFunction(1., 0, 1e-3, 1000)
-# guess = [0.0, 0.0, 1.2];
-# for state in iterated(x -> f(x), guess)
-#     stopFun(state) && return state
-# end
+    function backΔ(Δ)
+        grad = back2(Δ)[1]
+        for g in take(imap(back2,drop(iterated(back1, Δ),1)),100)
+            grad .+= g[1]
+            ng = norm(g[1])
+            if ng < 1e-7
+                break
+            elseif ng > 10
+                println("backprop not converging")
+                # try to minimise damage by scaling to small
+                grad ./= norm(grad)
+                grad .*= 1e-4
+                break
+            end
+        end
+        (grad, nothing, nothing)
+    end
+    return backΔ
+end
+
+fixedPointAD(f, guess, init, stopFunc) = fixedPoint(f, guess, init, stopFunc);
+
+@Zygote.adjoint function fixedPointAD(f, guess, init, stopFunc)
+    r = fixedPoint(f, guess, init, stopFunc);
+    return r, Δ -> (nothing, nothing, fixedPointBackward(f, r, n)(Δ), nothing);
+end

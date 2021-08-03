@@ -2,13 +2,15 @@ function energy(iPEPS, CTMRGTensors, tbg)
     
     Lx = iPEPS.Lx;
     Ly = iPEPS.Ly;
-    expValsH = zeros(Float64, Lx, Ly);
-    expValsV = zeros(Float64, Lx, Ly);
-    for lx=1:Lx, ly=1:Ly
-        expValsH[lx,ly] = twoSiteExpVal_H(iPEPS, CTMRGTensors, tbg, (lx, ly));
-        expValsV[lx,ly] = twoSiteExpVal_V(iPEPS, CTMRGTensors, tbg, (lx, ly));
-    end
-    energy = 1 / (2 * Lx * Ly) * (sum(expValsH) + sum(expValsV))
+    expValsH = [twoSiteExpVal_H(iPEPS, CTMRGTensors, tbg, (idx, idy)) for idx = 1 : Lx, idy = 1 : Ly];
+    expValsV = [twoSiteExpVal_V(iPEPS, CTMRGTensors, tbg, (idx, idy)) for idx = 1 : Lx, idy = 1 : Ly];
+    # expValsH = zeros(Float64, Lx, Ly);
+    # expValsV = zeros(Float64, Lx, Ly);
+    # for idx = 1 : Lx, idx = 1 : Ly
+    #     expValsH[idx,idy] = twoSiteExpVal_H(iPEPS, CTMRGTensors, tbg, (idx, idy));
+    #     expValsV[idx,idy] = twoSiteExpVal_V(iPEPS, CTMRGTensors, tbg, (idx, idy));
+    # end
+    energy = 1 / (2 * Lx * Ly) * (sum(expValsH) + sum(expValsV));
     
     return energy
     

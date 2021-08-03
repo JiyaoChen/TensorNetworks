@@ -9,18 +9,19 @@ function computeIsometries_LR(C1, T1, C2, T2, C3, T3, C4, T4, iPEPS, chiE, trunc
     rhoU = reshape(rhoU, prod(sizeRhoU[1 : 3]), prod(sizeRhoU[4 : 6]));
     rhoU /= norm(rhoU);        
     UU, SU, VU = svd(rhoU);
-    SU = diagm(SU);
+    # SU = diagm(SU);
     VU = VU';
 
     # truncate singular values
-    newChi = sum(diag(SU) .> truncBelowE);
+    newChi = sum(SU .> truncBelowE);
     UU = UU[:, 1 : newChi];
-    SU = SU[1 : newChi, 1 : newChi];
+    SU = SU[1 : newChi];
     VU = VU[1 : newChi, :];
 
     # absorb sqrt(SU) into UU and VU
-    FUL = UU * sqrt(SU);
-    FUR = sqrt(SU) * VU;
+    sqrtSU = diagm(sqrt.(SU));
+    FUL = UU * sqrtSU;
+    FUR = sqrtSU * VU;
 
 
 
@@ -29,18 +30,19 @@ function computeIsometries_LR(C1, T1, C2, T2, C3, T3, C4, T4, iPEPS, chiE, trunc
     rhoD = reshape(rhoD, prod(sizeRhoD[1 : 3]), prod(sizeRhoD[4 : 6]));
     rhoD /= norm(rhoD);
     UD, SD, VD = svd(rhoD);
-    SD = diagm(SD);
+    # SD = diagm(SD);
     VD = VD';
 
     # truncate singular values
-    newChi = sum(diag(SD) .> truncBelowE);
+    newChi = sum(SD .> truncBelowE);
     UD = UD[:, 1 : newChi];
-    SD = SD[1 : newChi, 1 : newChi];
+    SD = SD[1 : newChi];
     VD = VD[1 : newChi, :];
 
     # absorb sqrt(SD) into UD and VD
-    FDR = UD * sqrt(SD);
-    FDL = sqrt(SD) * VD;
+    sqrtSD = diagm(sqrt.(SD));
+    FDR = UD * sqrtSD;
+    FDL = sqrtSD * VD;
 
 
 
@@ -48,15 +50,15 @@ function computeIsometries_LR(C1, T1, C2, T2, C3, T3, C4, T4, iPEPS, chiE, trunc
     BOL = FDL * FUL;
     BOL /= norm(BOL);
     UL, SL, VL = svd(BOL);
-    SL = diagm(SL);
+    # SL = diagm(SL);
     VL = VL';
 
     # truncate UL, SL and VL
-    newChi = min(chiE, sum(diag(SL) .> truncBelowE));
+    newChi = min(chiE, sum(SL .> truncBelowE));
     UL = UL[:, 1 : newChi];
-    SL = SL[1 : newChi, 1 : newChi];
+    SL = SL[1 : newChi];
     VL = VL[1 : newChi, :];
-    sqrtSL = sqrt(pinv(SL));
+    sqrtSL = diagm(sqrt.(pinv.(SL)));
 
     # build projectors for left truncation
     PUL = FUL * VL' * sqrtSL;
@@ -71,15 +73,15 @@ function computeIsometries_LR(C1, T1, C2, T2, C3, T3, C4, T4, iPEPS, chiE, trunc
     BOR = FUR * FDR;
     BOR /= norm(BOR);
     UR, SR, VR = svd(BOR);
-    SR = diagm(SR);
+    # SR = diagm(SR);
     VR = VR';
 
     # truncate UR, SR and VR
-    newChi = min(chiE, sum(diag(SR) .> truncBelowE));
+    newChi = min(chiE, sum(SR .> truncBelowE));
     UR = UR[:, 1 : newChi];
-    SR = SR[1 : newChi, 1 : newChi];
+    SR = SR[1 : newChi];
     VR = VR[1 : newChi, :];
-    sqrtSR = sqrt(pinv(SR));
+    sqrtSR = diagm(sqrt.(pinv.(SR)));
 
     # build projectors for right truncation
     PUR = sqrtSR * UR' * FUR;
@@ -106,18 +108,19 @@ function computeIsometries_UD(C1, T1, C2, T2, C3, T3, C4, T4, iPEPS, chiE, trunc
     rhoL = reshape(rhoL, prod(sizeRhoL[1 : 3]), prod(sizeRhoL[4 : 6]));
     rhoL /= norm(rhoL);        
     UL, SL, VL = svd(rhoL);
-    SL = diagm(SL);
+    # SL = diagm(SL);
     VL = VL';
 
     # truncate singular values
-    newChi = sum(diag(SL) .> truncBelowE);
+    newChi = sum(SL .> truncBelowE);
     UL = UL[:, 1 : newChi];
-    SL = SL[1 : newChi, 1 : newChi];
+    SL = SL[1 : newChi];
     VL = VL[1 : newChi, :];
 
     # absorb sqrt(SL) into UL and VL
-    FDL = UL * sqrt(SL);
-    FUL = sqrt(SL) * VL;
+    sqrtSL = diagm(sqrt.(SL))
+    FDL = UL * sqrtSL;
+    FUL = sqrtSL * VL;
 
 
     # perform SVD of rhoR
@@ -125,33 +128,34 @@ function computeIsometries_UD(C1, T1, C2, T2, C3, T3, C4, T4, iPEPS, chiE, trunc
     rhoR = reshape(rhoR, prod(sizeRhoR[1 : 3]), prod(sizeRhoR[4 : 6]));
     rhoR /= norm(rhoR);
     UR, SR, VR = svd(rhoR);
-    SR = diagm(SR);
+    # SR = diagm(SR);
     VR = VR';
 
     # truncate singular values
-    newChi = sum(diag(SR) .> truncBelowE);
+    newChi = sum(SR .> truncBelowE);
     UR = UR[:, 1 : newChi];
-    SR = SR[1 : newChi, 1 : newChi];
+    SR = SR[1 : newChi];
     VR = VR[1 : newChi, :];
 
     # absorb sqrt(SR) into UR and VR
-    FUR = UR * sqrt(SR);
-    FDR = sqrt(SR) * VR;
+    sqrtSR = diagm(sqrt.(SR))
+    FUR = UR * sqrtSR;
+    FDR = sqrtSR * VR;
 
 
     # compute biorthogonalization of FUL and FUR tensors
     BOU = FUL * FUR;
     BOU /= norm(BOU);
     UU, SU, VU = svd(BOU);
-    SU = diagm(SU);
+    # SU = diagm(SU);
     VU = VU';
 
     # truncate UU, SU and VU
-    newChi = min(chiE, sum(diag(SU) .> truncBelowE));
+    newChi = min(chiE, sum(SU .> truncBelowE));
     UU = UU[:, 1 : newChi];
-    SU = SU[1 : newChi, 1 : newChi];
+    SU = SU[1 : newChi];
     VU = VU[1 : newChi, :];
-    sqrtSU = sqrt(pinv(SU));
+    sqrtSU = diagm(sqrt.(pinv.(SU)));
 
     # build projectors for up truncation
     PUL = sqrtSU * UU' * FUL;
@@ -166,15 +170,17 @@ function computeIsometries_UD(C1, T1, C2, T2, C3, T3, C4, T4, iPEPS, chiE, trunc
     BOD = FDR * FDL;
     BOD /= norm(BOD);
     UD, SD, VD = svd(BOD);
-    SD = diagm(SD);
+    # SD = diagm(SD);
     VD = VD';
 
     # truncate UD, SD and VD
-    newChi = min(chiE, sum(diag(SD) .> truncBelowE));
+    newChi = min(chiE, sum(SD .> truncBelowE));
     UD = UD[:, 1 : newChi];
-    SD = SD[1 : newChi, 1 : newChi];
+    SD = SD[1 : newChi];
     VD = VD[1 : newChi, :];
-    sqrtSD = sqrt(pinv(SD));
+    sqrtSD = diagm(sqrt.(pinv.(SD)));
+
+    # sqrts = sqrt.(pinv.(view(s,1:cutoff)))
 
     # build projectors for right truncation
     PDR = sqrtSD * UD' * FDR;

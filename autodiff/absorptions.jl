@@ -26,7 +26,9 @@ function absorptionStep_UD(C1, T1, C2, T2, C3, T3, C4, T4, iPEPS, chiE, truncBel
     nC1, nT1, nC2 = similar.((C1, T1, C2));
     nC3, nT3, nC4 = similar.((C3, T3, C4));
 
-    foreach(keys(iPEPS.tensorDict)) do tensorKey
+    tensorKeys = keys(iPEPS.tensorDict)
+    # foreach(keys(iPEPS.tensorDict)) do tensorKey
+    foreach(tensorKeys) do tensorKey
         projsUL[tensorKey...], projsUR[tensorKey...], projsDL[tensorKey...], projsDR[tensorKey...] = computeIsometries_UD(C1, T1, C2, T2, C3, T3, C4, T4, iPEPS, chiE, truncBelowE, tensorKey);
     end
 
