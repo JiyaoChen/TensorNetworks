@@ -1,8 +1,7 @@
-function computeIsometries_LR(C1, T1, C2, T2, C3, T3, C4, T4, iPEPS, chiE, truncBelowE, (idX, idY))
+function computeIsometries_LR(C1, T1, C2, T2, C3, T3, C4, T4, pepsTensors, unitCellLayout, chiE, truncBelowE, (idX, idY))
     
     # compute upper and lower half of the network
-    rhoU, rhoD = horizontalCut(C1, T1, C2, T2, C3, T3, C4, T4, iPEPS, (idX, idY))
-    d = size(iPEPS[1,1], 3);
+    rhoU, rhoD = horizontalCut(C1, T1, C2, T2, C3, T3, C4, T4, pepsTensors, unitCellLayout, (idX, idY))
 
     # perform SVD of rhoU
     sizeRhoU = size(rhoU);
@@ -97,11 +96,10 @@ function computeIsometries_LR(C1, T1, C2, T2, C3, T3, C4, T4, iPEPS, chiE, trunc
 
 end
 
-function computeIsometries_UD(C1, T1, C2, T2, C3, T3, C4, T4, iPEPS, chiE, truncBelowE, (idX, idY))
+function computeIsometries_UD(C1, T1, C2, T2, C3, T3, C4, T4, pepsTensors, unitCellLayout, chiE, truncBelowE, (idX, idY))
     
     # compute left and right half of the network
-    rhoL, rhoR = verticalCut(C1, T1, C2, T2, C3, T3, C4, T4, iPEPS, (idX, idY))
-    d = size(iPEPS[1,1], 3);
+    rhoL, rhoR = verticalCut(C1, T1, C2, T2, C3, T3, C4, T4, pepsTensors, unitCellLayout, (idX, idY))
 
     # perform SVD of rhoL
     sizeRhoL = size(rhoL);
@@ -196,13 +194,15 @@ function computeIsometries_UD(C1, T1, C2, T2, C3, T3, C4, T4, iPEPS, chiE, trunc
 
 end
 
-function horizontalCut(C1, T1, C2, T2, C3, T3, C4, T4, iPEPS, (x, y))
+function horizontalCut(C1, T1, C2, T2, C3, T3, C4, T4, pepsTensors, unitCellLayout, (x, y))
+
+    Lx, Ly = size(pepsTensors);
 
     # contract the four corners of the TN
-    rhoUL = ein"(((ahkg, gi), hcmfj), iljd), kbmel -> abcdef"(T4[x + 0, y + 0], C1[x + 0, y + 0], conj(iPEPS[x + 0, y + 0]), T1[x + 0, y + 0], iPEPS[x + 0, y + 0]);
-    rhoUR = ein"(((alji, ig), cemhj), khdg), bfmkl -> abcdef"(T1[x + 0, y + 1], C2[x + 0, y + 1], conj(iPEPS[x + 0, y + 1]), T2[x + 0, y + 1], iPEPS[x + 0, y + 1]);
-    rhoDL = ein"(((ghkd, ig), hjmbf), iajl), klmce -> abcdef"(T4[x + 1, y + 0], C4[x + 1, y + 0], conj(iPEPS[x + 1, y + 0]), T3[x + 1, y + 0], iPEPS[x + 1, y + 0]);
-    rhoDR = ein"(((dijl, ig), ejmhb), khga), flmkc -> abcdef"(T3[x + 1, y + 1], C3[x + 1, y + 1], conj(iPEPS[x + 1, y + 1]), T2[x + 1, y + 1], iPEPS[x + 1, y + 1]);
+    rhoUL = ein"(((ahkg, gi), hcmfj), iljd), kbmel -> abcdef"(T4[getCoordinates(x + 0, Lx, y + 0, Ly, unitCellLayout)...], C1[getCoordinates(x + 0, Lx, y + 0, Ly, unitCellLayout)...], conj(pepsTensors[getCoordinates(x + 0, Lx, y + 0, Ly, unitCellLayout)...]), T1[getCoordinates(x + 0, Lx, y + 0, Ly, unitCellLayout)...], pepsTensors[getCoordinates(x + 0, Lx, y + 0, Ly, unitCellLayout)...]);
+    rhoUR = ein"(((alji, ig), cemhj), khdg), bfmkl -> abcdef"(T1[getCoordinates(x + 0, Lx, y + 1, Ly, unitCellLayout)...], C2[getCoordinates(x + 0, Lx, y + 1, Ly, unitCellLayout)...], conj(pepsTensors[getCoordinates(x + 0, Lx, y + 1, Ly, unitCellLayout)...]), T2[getCoordinates(x + 0, Lx, y + 1, Ly, unitCellLayout)...], pepsTensors[getCoordinates(x + 0, Lx, y + 1, Ly, unitCellLayout)...]);
+    rhoDL = ein"(((ghkd, ig), hjmbf), iajl), klmce -> abcdef"(T4[getCoordinates(x + 1, Lx, y + 0, Ly, unitCellLayout)...], C4[getCoordinates(x + 1, Lx, y + 0, Ly, unitCellLayout)...], conj(pepsTensors[getCoordinates(x + 1, Lx, y + 0, Ly, unitCellLayout)...]), T3[getCoordinates(x + 1, Lx, y + 0, Ly, unitCellLayout)...], pepsTensors[getCoordinates(x + 1, Lx, y + 0, Ly, unitCellLayout)...]);
+    rhoDR = ein"(((dijl, ig), ejmhb), khga), flmkc -> abcdef"(T3[getCoordinates(x + 1, Lx, y + 1, Ly, unitCellLayout)...], C3[getCoordinates(x + 1, Lx, y + 1, Ly, unitCellLayout)...], conj(pepsTensors[getCoordinates(x + 1, Lx, y + 1, Ly, unitCellLayout)...]), T2[getCoordinates(x + 1, Lx, y + 1, Ly, unitCellLayout)...], pepsTensors[getCoordinates(x + 1, Lx, y + 1, Ly, unitCellLayout)...]);
     
     # contract upper and lower half
     @ein rhoU[-1, -2, -3, -4, -5, -6] := rhoUL[-1, -2, -3, 1, 2, 3] * rhoUR[1, 2, 3, -4, -5, -6];
@@ -212,13 +212,15 @@ function horizontalCut(C1, T1, C2, T2, C3, T3, C4, T4, iPEPS, (x, y))
 
 end
 
-function verticalCut(C1, T1, C2, T2, C3, T3, C4, T4, iPEPS, (x, y))
+function verticalCut(C1, T1, C2, T2, C3, T3, C4, T4, pepsTensors, unitCellLayout, (x, y))
+
+    Lx, Ly = size(pepsTensors);
 
     # contract the four corners of the TN
-    rhoUL = ein"(((ahkg, gi), hcmfj), iljd), kbmel -> abcdef"(T4[x + 0, y + 0], C1[x + 0, y + 0], conj(iPEPS[x + 0, y + 0]), T1[x + 0, y + 0], iPEPS[x + 0, y + 0]);
-    rhoUR = ein"(((alji, ig), cemhj), khdg), bfmkl -> abcdef"(T1[x + 0, y + 1], C2[x + 0, y + 1], conj(iPEPS[x + 0, y + 1]), T2[x + 0, y + 1], iPEPS[x + 0, y + 1]);
-    rhoDL = ein"(((ghkd, ig), hjmbf), iajl), klmce -> abcdef"(T4[x + 1, y + 0], C4[x + 1, y + 0], conj(iPEPS[x + 1, y + 0]), T3[x + 1, y + 0], iPEPS[x + 1, y + 0]);
-    rhoDR = ein"(((dijl, ig), ejmhb), khga), flmkc -> abcdef"(T3[x + 1, y + 1], C3[x + 1, y + 1], conj(iPEPS[x + 1, y + 1]), T2[x + 1, y + 1], iPEPS[x + 1, y + 1]);
+    rhoUL = ein"(((ahkg, gi), hcmfj), iljd), kbmel -> abcdef"(T4[getCoordinates(x + 0, Lx, y + 0, Ly, unitCellLayout)...], C1[getCoordinates(x + 0, Lx, y + 0, Ly, unitCellLayout)...], conj(pepsTensors[getCoordinates(x + 0, Lx, y + 0, Ly, unitCellLayout)...]), T1[getCoordinates(x + 0, Lx, y + 0, Ly, unitCellLayout)...], pepsTensors[getCoordinates(x + 0, Lx, y + 0, Ly, unitCellLayout)...]);
+    rhoUR = ein"(((alji, ig), cemhj), khdg), bfmkl -> abcdef"(T1[getCoordinates(x + 0, Lx, y + 1, Ly, unitCellLayout)...], C2[getCoordinates(x + 0, Lx, y + 1, Ly, unitCellLayout)...], conj(pepsTensors[getCoordinates(x + 0, Lx, y + 1, Ly, unitCellLayout)...]), T2[getCoordinates(x + 0, Lx, y + 1, Ly, unitCellLayout)...], pepsTensors[getCoordinates(x + 0, Lx, y + 1, Ly, unitCellLayout)...]);
+    rhoDL = ein"(((ghkd, ig), hjmbf), iajl), klmce -> abcdef"(T4[getCoordinates(x + 1, Lx, y + 0, Ly, unitCellLayout)...], C4[getCoordinates(x + 1, Lx, y + 0, Ly, unitCellLayout)...], conj(pepsTensors[getCoordinates(x + 1, Lx, y + 0, Ly, unitCellLayout)...]), T3[getCoordinates(x + 1, Lx, y + 0, Ly, unitCellLayout)...], pepsTensors[getCoordinates(x + 1, Lx, y + 0, Ly, unitCellLayout)...]);
+    rhoDR = ein"(((dijl, ig), ejmhb), khga), flmkc -> abcdef"(T3[getCoordinates(x + 1, Lx, y + 1, Ly, unitCellLayout)...], C3[getCoordinates(x + 1, Lx, y + 1, Ly, unitCellLayout)...], conj(pepsTensors[getCoordinates(x + 1, Lx, y + 1, Ly, unitCellLayout)...]), T2[getCoordinates(x + 1, Lx, y + 1, Ly, unitCellLayout)...], pepsTensors[getCoordinates(x + 1, Lx, y + 1, Ly, unitCellLayout)...]);
 
     # contract left and right half
     @ein rhoL[-1, -2, -3, -4, -5, -6] := rhoDL[-1, -2, -3, 1, 2, 3] * rhoUL[1, 2, 3, -4, -5, -6];

@@ -1,15 +1,9 @@
-function energy(iPEPS, CTMRGTensors, tbg)
+function energy(pepsTensors, unitCellLayout, CTMRGTensors, tbg)
     
-    Lx = iPEPS.Lx;
-    Ly = iPEPS.Ly;
-    expValsH = [twoSiteExpVal_H(iPEPS, CTMRGTensors, tbg, (idx, idy)) for idx = 1 : Lx, idy = 1 : Ly];
-    expValsV = [twoSiteExpVal_V(iPEPS, CTMRGTensors, tbg, (idx, idy)) for idx = 1 : Lx, idy = 1 : Ly];
-    # expValsH = zeros(Float64, Lx, Ly);
-    # expValsV = zeros(Float64, Lx, Ly);
-    # for idx = 1 : Lx, idx = 1 : Ly
-    #     expValsH[idx,idy] = twoSiteExpVal_H(iPEPS, CTMRGTensors, tbg, (idx, idy));
-    #     expValsV[idx,idy] = twoSiteExpVal_V(iPEPS, CTMRGTensors, tbg, (idx, idy));
-    # end
+    # get size
+    Lx, Ly = size(pepsTensors);
+    expValsH = [twoSiteExpVal_H(pepsTensors, unitCellLayout, CTMRGTensors, tbg, (idx, idy)) for idx = 1 : Lx, idy = 1 : Ly];
+    expValsV = [twoSiteExpVal_V(pepsTensors, unitCellLayout, CTMRGTensors, tbg, (idx, idy)) for idx = 1 : Lx, idy = 1 : Ly];
     energy = 1 / (2 * Lx * Ly) * (sum(expValsH) + sum(expValsV));
     
     return energy
@@ -17,13 +11,16 @@ function energy(iPEPS, CTMRGTensors, tbg)
 end
 
 # function twoSiteExpVal_H(pepsTensorL, pepsTensorR, twoSiteOperator, envTensorsL, envTensorsR)
-function twoSiteExpVal_H(iPEPS, CTMRGTensors, twoSiteOperator, (idx, idy))
+function twoSiteExpVal_H(pepsTensors, unitCellLayout, CTMRGTensors, twoSiteOperator, (idx, idy))
 
-    pepsTensorL = iPEPS[idx + 0, idy + 0];
-    pepsTensorR = iPEPS[idx + 0, idy + 1];
+    # get size
+    Lx, Ly = size(pepsTensors);
+
+    pepsTensorL = pepsTensors[getCoordinates(idx + 0, Lx, idy + 0, Ly, unitCellLayout)...];
+    pepsTensorR = pepsTensors[getCoordinates(idx + 0, Lx, idy + 1, Ly, unitCellLayout)...];
     
-    envTensorsL = [CT[idx + 0, idy + 0] for CT in CTMRGTensors];
-    envTensorsR = [CT[idx + 0, idy + 1] for CT in CTMRGTensors];
+    envTensorsL = [CT[getCoordinates(idx + 0, Lx, idy + 0, Ly, unitCellLayout)...] for CT in CTMRGTensors];
+    envTensorsR = [CT[getCoordinates(idx + 0, Lx, idy + 1, Ly, unitCellLayout)...] for CT in CTMRGTensors];
 
     TNL = ein"ae, ebcf, fd -> abcd"(envTensorsL[7], envTensorsL[8], envTensorsL[1]);
     TNL = ein"ahfg, hbecd -> abcdefg"(TNL, conj(pepsTensorL));
@@ -57,13 +54,16 @@ function twoSiteExpVal_H(iPEPS, CTMRGTensors, twoSiteOperator, (idx, idy))
 
 end
 
-function twoSiteExpVal_V(iPEPS, CTMRGTensors, twoSiteOperator, (idx, idy))
+function twoSiteExpVal_V(pepsTensors, unitCellLayout, CTMRGTensors, twoSiteOperator, (idx, idy))
 
-    pepsTensorU = iPEPS[idx + 0, idy + 0];
-    pepsTensorD = iPEPS[idx + 1, idy + 0];
+    # get size
+    Lx, Ly = size(pepsTensors);
+
+    pepsTensorU = pepsTensors[getCoordinates(idx + 0, Lx, idy + 0, Ly, unitCellLayout)...];
+    pepsTensorD = pepsTensors[getCoordinates(idx + 1, Lx, idy + 0, Ly, unitCellLayout)...];
     
-    envTensorsU = [CT[idx + 0, idy + 0] for CT in CTMRGTensors];
-    envTensorsD = [CT[idx + 1, idy + 0] for CT in CTMRGTensors];
+    envTensorsU = [CT[getCoordinates(idx + 0, Lx, idy + 0, Ly, unitCellLayout)...] for CT in CTMRGTensors];
+    envTensorsD = [CT[getCoordinates(idx + 1, Lx, idy + 0, Ly, unitCellLayout)...] for CT in CTMRGTensors];
 
     TNU = ein"(((((dhng, gi), hbfmj), ipjk), kl), omal), nceop -> abcdef"(envTensorsU[8], envTensorsU[1], conj(pepsTensorU), envTensorsU[2], envTensorsU[3], envTensorsU[4], pepsTensorU);
     TND = ein"(((((ghnd, ig), hjfmb), ikjo), kl), pmla), noepc -> abcdef"(envTensorsD[8], envTensorsD[7], conj(pepsTensorD), envTensorsD[6], envTensorsD[5], envTensorsD[4], pepsTensorD);

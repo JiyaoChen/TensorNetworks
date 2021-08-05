@@ -1,10 +1,10 @@
-# the basic struct used to define a tensorial peps object on a given unit cell
-mutable struct pepsUnitCell{T}
-    Lx::Int64
-    Ly::Int64
-    tensorArray::Array{T, 2}
-    unitCellLayout::Matrix{Int64}
-end
+# # the basic struct used to define a tensorial peps object on a given unit cell
+# mutable struct pepsUnitCell{T}
+#     Lx::Int64
+#     Ly::Int64
+#     tensorArray::Array{T, 2}
+#     unitCellLayout::Matrix{Int64}
+# end
 
 # containing some auxiliary functions to work with the peps objects
 function getCoordinates(latticeIdx, Lx, latticeIdy, Ly, unitCellLayout)
@@ -28,16 +28,37 @@ function getCoordinates(latticeIdx, Lx, latticeIdy, Ly, unitCellLayout)
 
 end
 
-Base.similar(UC::pepsUnitCell) = pepsUnitCell(UC.Lx, UC.Ly, Array{eltype(UC.tensorArray), 2}(undef, UC.Lx, UC.Ly), UC.unitCellLayout)
+function getPosX(latticeIdx, Lx, unitCellLayout)
+    
+    # set ordering of tensors in the Lx × Ly unit cell
+    tensorNumbers = reshape(collect(1 : Lx * Ly), Lx, Ly)
+    
+    # convert (latticeIdx, latticeIdy) to (unitCellIdx, unitCellIdy)
+    unitCellLx, unitCellLy = size(unitCellLayout);
+    unitCellIdx = mod(latticeIdx - 1, unitCellLx) + 1;
+    unitCellIdy = mod(latticeIdy - 1, unitCellLy) + 1;
 
-function Base.getindex(UC::pepsUnitCell, latticeIdx::T, latticeIdy::T) where T <: Integer
-    Lx = UC.Lx;
-    Ly = UC.Ly;
-    tensorArray = UC.tensorArray;
-    unitCellLayout = UC.unitCellLayout;
-    posX, posY = getCoordinates(latticeIdx, Lx, latticeIdy, Ly, unitCellLayout);
-    return tensorArray[posX, posY]
+    # get number of tensor
+    tensorNum = unitCellLayout[unitCellIdx, unitCellIdy];
+
+    # get posX and posY of (latticeIdx, latticeIdy) in unit cell
+    tensorIdx = findfirst(tensorNumbers .== tensorNum);
+    posX = tensorIdx[1];
+    posY = tensorIdx[2];
+    return posX, posY;
+
 end
+
+# Base.similar(UC::pepsUnitCell) = pepsUnitCell(UC.Lx, UC.Ly, Array{eltype(UC.tensorArray), 2}(undef, UC.Lx, UC.Ly), UC.unitCellLayout)
+
+# function Base.getindex(UC::pepsUnitCell, latticeIdx::T, latticeIdy::T) where T <: Integer
+#     Lx = UC.Lx;
+#     Ly = UC.Ly;
+#     tensorArray = UC.tensorArray;
+#     unitCellLayout = UC.unitCellLayout;
+#     posX, posY = getCoordinates(latticeIdx, Lx, latticeIdy, Ly, unitCellLayout);
+#     return tensorArray[posX, posY]
+# end
 
 # this would be a mutable function (which we want to avoid)
 # function Base.setindex!(UC::pepsUnitCell, pepsTensor, latticeIdx::T, latticeIdy::T) where T <: Integer
@@ -101,43 +122,30 @@ function initializeTensors(initFunc, tensorArray::Array, χ, initMethod::Int, T,
     
     # initialize array with CTM tensors
     tensorArray = Array{T, 2}([initFunc(tensorArray[idx, idy], χ, initMethod) for idx = 1 : Lx, idy = 1 : Ly]);
-
-    # construct struct
-    unitCell = pepsUnitCell(Lx, Ly, tensorArray, unitCellLayout);
-    return unitCell
-
-    # # initialize empty struct for unitCell
-    # unitCell = pepsUnitCell(Lx, Ly, Dict{Tuple{Int, Int}, T}(), unitCellLayout);
-
-    # # call initFunc for each element in the tensorDict Dict and return unitCell
-    # foreach(u -> unitCell[u...] = initFunc(tensorDict[u], χ, initMethod), keys(tensorDict));
-    # return unitCell
+    return tensorArray
 
 end
 
-function initializeCTMRGTensors(iPEPS::pepsUnitCell, chiE::Int; initMethod = 0)
+function initializeCTMRGTensors(pepsTensors, unitCellLayout, chiE::Int; initMethod = 0)
     
-    # get struct variables
-    Lx = iPEPS.Lx;
-    Ly = iPEPS.Ly;
-    tensorArray = iPEPS.tensorArray;
-    unitCellLayout = iPEPS.unitCellLayout;
+    # get size
+    Lx, Ly = size(pepsTensors);
 
     # set types for C and T tensors
-    typeC = Array{eltype(eltype(tensorArray)), 2};
-    typeT = Array{eltype(eltype(tensorArray)), 4};
+    typeC = Array{eltype(eltype(pepsTensors)), 2};
+    typeT = Array{eltype(eltype(pepsTensors)), 4};
 
-    C1 = initializeTensors(initializeC, tensorArray, chiE, initMethod, typeC, Lx, Ly, unitCellLayout);
-    T1 = initializeTensors(initializeT1, tensorArray, chiE, initMethod, typeT, Lx, Ly, unitCellLayout);
+    C1 = initializeTensors(initializeC, pepsTensors, chiE, initMethod, typeC, Lx, Ly, unitCellLayout);
+    T1 = initializeTensors(initializeT1, pepsTensors, chiE, initMethod, typeT, Lx, Ly, unitCellLayout);
 
-    C2 = initializeTensors(initializeC, tensorArray, chiE, initMethod, typeC, Lx, Ly, unitCellLayout);
-    T2 = initializeTensors(initializeT2, tensorArray, chiE, initMethod, typeT, Lx, Ly, unitCellLayout);
+    C2 = initializeTensors(initializeC, pepsTensors, chiE, initMethod, typeC, Lx, Ly, unitCellLayout);
+    T2 = initializeTensors(initializeT2, pepsTensors, chiE, initMethod, typeT, Lx, Ly, unitCellLayout);
 
-    C3 = initializeTensors(initializeC, tensorArray, chiE, initMethod, typeC, Lx, Ly, unitCellLayout);
-    T3 = initializeTensors(initializeT3, tensorArray, chiE, initMethod, typeT, Lx, Ly, unitCellLayout);
+    C3 = initializeTensors(initializeC, pepsTensors, chiE, initMethod, typeC, Lx, Ly, unitCellLayout);
+    T3 = initializeTensors(initializeT3, pepsTensors, chiE, initMethod, typeT, Lx, Ly, unitCellLayout);
 
-    C4 = initializeTensors(initializeC, tensorArray, chiE, initMethod, typeC, Lx, Ly, unitCellLayout);
-    T4 = initializeTensors(initializeT4, tensorArray, chiE, initMethod, typeT, Lx, Ly, unitCellLayout);
+    C4 = initializeTensors(initializeC, pepsTensors, chiE, initMethod, typeC, Lx, Ly, unitCellLayout);
+    T4 = initializeTensors(initializeT4, pepsTensors, chiE, initMethod, typeT, Lx, Ly, unitCellLayout);
 
     # return CTMRG tensors
     return C1, T1, C2, T2, C3, T3, C4, T4
