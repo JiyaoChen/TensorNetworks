@@ -15,31 +15,44 @@ mutable struct StopFunction{T,S}
     chiE::Int
 end
 
+function getSingularValues(cornerTensors, idx, idy, chiE)
+    singularValues = zeros(Float64, chiE, 0);
+    foreach(cornerTensors) do C
+        singVals = svd(C[idx, idy]).S;
+        singularValues = hcat(singularValues, vcat(singVals, zeros(chiE - length(singVals))));
+    end
+    return singularValues;
+end
+
 @Zygote.nograd StopFunction
-function (stopFunc::StopFunction)(state)
+function (stopFunc::StopFunction)(stateCTMRG)
     
     stopFunc.counter += 1
     stopFunc.counter > stopFunc.maxit && return true
 
     chiE = stopFunc.chiE;
-    C1, C2, C3, C4 = state[[1, 3, 5, 7]];
+    C1, C2, C3, C4 = stateCTMRG[[1, 3, 5, 7]];
     
+    # cornerTensors = (stateCTMRG[[1, 3, 5, 7]]);
+    # newSingularValues = [getSingularValues(cornerTensors, idx, idy, chiE) for idx = 1 : Lx, idy = 1 : Ly];
+    # println(newSingularValues)
+    # println(size(newSingularValues))
+
     newSingularValues = zeros(Float64, C1.Lx, C1.Ly, 4, chiE);
-    foreach(keys(C1.tensorDict)) do tensorKey
-        Λ1 = svd(C1.tensorDict[tensorKey]).S;
-        Λ2 = svd(C2.tensorDict[tensorKey]).S;
-        Λ3 = svd(C3.tensorDict[tensorKey]).S;
-        Λ4 = svd(C4.tensorDict[tensorKey]).S;
-        newSingularValues[tensorKey[1], tensorKey[2], 1, 1 : length(Λ1)] = Λ1;
-        newSingularValues[tensorKey[1], tensorKey[2], 2, 1 : length(Λ2)] = Λ2;
-        newSingularValues[tensorKey[1], tensorKey[2], 3, 1 : length(Λ3)] = Λ3;
-        newSingularValues[tensorKey[1], tensorKey[2], 4, 1 : length(Λ4)] = Λ4;
+    for idx = 1 : Lx, idy = 1 : Ly
+        Λ1 = svd(C1.tensorArray[idx, idy]).S;
+        Λ2 = svd(C2.tensorArray[idx, idy]).S;
+        Λ3 = svd(C3.tensorArray[idx, idy]).S;
+        Λ4 = svd(C4.tensorArray[idx, idy]).S;
+        newSingularValues[idx, idy, 1, 1 : length(Λ1)] = Λ1;
+        newSingularValues[idx, idy, 2, 1 : length(Λ2)] = Λ2;
+        newSingularValues[idx, idy, 3, 1 : length(Λ3)] = Λ3;
+        newSingularValues[idx, idy, 4, 1 : length(Λ4)] = Λ4;
         # @info Λ1, Λ2, Λ3, Λ4
     end
 
-    # vals = state[3]
     diff = norm(newSingularValues - stopFunc.oldvals)
-    @printf("convergence CTMRG : %0.6e\n", diff)
+    @printf("convergence CTMRG step %d : %0.6e\n", stopFunc.counter, diff)
     diff <= stopFunc.tol && return true
     stopFunc.oldvals = newSingularValues
 
