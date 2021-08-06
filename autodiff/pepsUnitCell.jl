@@ -21,28 +21,8 @@ function getCoordinates(latticeIdx, Lx, latticeIdy, Ly, unitCellLayout)
     tensorNum = unitCellLayout[unitCellIdx, unitCellIdy];
 
     # get posX and posY of (latticeIdx, latticeIdy) in unit cell
-    tensorIdx = findfirst(tensorNumbers .== tensorNum);
-    posX = tensorIdx[1];
-    posY = tensorIdx[2];
-    return posX, posY;
-
-end
-
-function getPosX(latticeIdx, Lx, unitCellLayout)
-    
-    # set ordering of tensors in the Lx × Ly unit cell
-    tensorNumbers = reshape(collect(1 : Lx * Ly), Lx, Ly)
-    
-    # convert (latticeIdx, latticeIdy) to (unitCellIdx, unitCellIdy)
-    unitCellLx, unitCellLy = size(unitCellLayout);
-    unitCellIdx = mod(latticeIdx - 1, unitCellLx) + 1;
-    unitCellIdy = mod(latticeIdy - 1, unitCellLy) + 1;
-
-    # get number of tensor
-    tensorNum = unitCellLayout[unitCellIdx, unitCellIdy];
-
-    # get posX and posY of (latticeIdx, latticeIdy) in unit cell
-    tensorIdx = findfirst(tensorNumbers .== tensorNum);
+    # tensorIdx = findfirst(tensorNumbers .== tensorNum);
+    tensorIdx = CartesianIndices(tensorNumbers)[tensorNum];
     posX = tensorIdx[1];
     posY = tensorIdx[2];
     return posX, posY;

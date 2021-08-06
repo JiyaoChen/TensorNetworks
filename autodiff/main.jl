@@ -76,6 +76,6 @@ pepsTensors = rand(Float64, Lx, Ly, chiB, chiB, d, chiB, chiB);
 
 optimmethod = LBFGS(m = 20);
 optimargs = ();
-let energy = x -> real(computeEnergy(pepsTensors, unitCellLayout, chiE, truncBelowE, convTol, maxIter, initMethod, energyTBG))
+let energy = x -> real(computeEnergy(x, unitCellLayout, chiE, truncBelowE, convTol, maxIter, initMethod, energyTBG))
     res = optimize(energy, Δ -> Zygote.gradient(energy, Δ)[1], pepsTensors, optimmethod, inplace = false, optimargs...)
 end

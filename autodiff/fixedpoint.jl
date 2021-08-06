@@ -71,8 +71,6 @@ end
     define custom adjoint for reverse-mode AD through fixed point CTMRG routine
 =#
 
-# fixedpointbackward(next, (c,t,vals), (a, χ, d))
-
 function fixedPointBackward(f, CTMRGTensors, (iPEPS, unitCellLayout, chiE, truncBelowE))
     
     _, back = Zygote.pullback(f, CTMRGTensors, (iPEPS, unitCellLayout, chiE, truncBelowE));

@@ -173,38 +173,38 @@ end
 
 
 
-function absorption_L!(nC4, nT4, nC1, C1, T1, T3, C4, T4, pepsTensors, projsUL, projsDL, (x, y))
+# function absorption_L!(nC4, nT4, nC1, C1, T1, T3, C4, T4, pepsTensors, projsUL, projsDL, (x, y))
     
-    nC4[x + 0, y + 1] = ein"(cd, cafe), defb -> ab"(C4[x + 0, y + 0], T3[x + 0, y + 0], projsUL[x + 0, y + 0]);
-    nT4[x + 0, y + 1] = ein"(afkg, (fejh, egmbi), hlid), jkmcl -> abcd"(projsDL[x + 0, y + 0], T4[x + 0, y + 0], conj(pepsTensors[x + 0, y + 0]), projsUL[x - 1, y + 0], pepsTensors[x + 0, y + 0]);
-    nC1[x + 0, y + 1] = ein"adef, (dc, cefb) -> ab"(projsDL[x - 1, y + 0], C1[x + 0, y + 0], T1[x + 0, y + 0]);
+#     nC4[x + 0, y + 1] = ein"(cd, cafe), defb -> ab"(C4[x + 0, y + 0], T3[x + 0, y + 0], projsUL[x + 0, y + 0]);
+#     nT4[x + 0, y + 1] = ein"(afkg, (fejh, egmbi), hlid), jkmcl -> abcd"(projsDL[x + 0, y + 0], T4[x + 0, y + 0], conj(pepsTensors[x + 0, y + 0]), projsUL[x - 1, y + 0], pepsTensors[x + 0, y + 0]);
+#     nC1[x + 0, y + 1] = ein"adef, (dc, cefb) -> ab"(projsDL[x - 1, y + 0], C1[x + 0, y + 0], T1[x + 0, y + 0]);
 
-end
+# end
 
-function absorption_R!(nC2, nT2, nC3, T1, C2, T2, C3, T3, pepsTensors, projsUR, projsDR, (x, y))
+# function absorption_R!(nC2, nT2, nC3, T1, C2, T2, C3, T3, pepsTensors, projsUR, projsDR, (x, y))
     
-    nC2[x + 0, y - 1] = ein"(adec, cf), fedb -> ab"(T1[x + 0, y + 0], C2[x + 0, y + 0], projsDR[x - 1, y - 1]);
-    nT2[x + 0, y - 1] = ein"(fgjc, (kefh, bgmei), dhil), ajmkl -> abcd"(projsDR[x + 0, y - 1], T2[x + 0, y + 0], conj(pepsTensors[x + 0, y + 0]), projsUR[x - 1, y - 1], pepsTensors[x + 0, y + 0]);
-    nC3[x + 0, y - 1] = ein"bdef, (acef, cd) -> ab"(projsUR[x + 0, y - 1], T3[x + 0, y + 0], C3[x + 0, y + 0]);
+#     nC2[x + 0, y - 1] = ein"(adec, cf), fedb -> ab"(T1[x + 0, y + 0], C2[x + 0, y + 0], projsDR[x - 1, y - 1]);
+#     nT2[x + 0, y - 1] = ein"(fgjc, (kefh, bgmei), dhil), ajmkl -> abcd"(projsDR[x + 0, y - 1], T2[x + 0, y + 0], conj(pepsTensors[x + 0, y + 0]), projsUR[x - 1, y - 1], pepsTensors[x + 0, y + 0]);
+#     nC3[x + 0, y - 1] = ein"bdef, (acef, cd) -> ab"(projsUR[x + 0, y - 1], T3[x + 0, y + 0], C3[x + 0, y + 0]);
 
-end
+# end
 
-function absorption_U!(nC1, nT1, nC2, T4, C1, T1, C2, T2, pepsTensors, projsUL, projsUR, (x, y))
+# function absorption_U!(nC1, nT1, nC2, T4, C1, T1, C2, T2, pepsTensors, projsUL, projsUR, (x, y))
     
-    nC1[x + 1, y + 0] = ein"(afec, cd), defb -> ab"(T4[x + 0, y + 0], C1[x + 0, y + 0], projsUR[x + 0, y - 1]);
-    nT1[x + 1, y + 0] = ein"(afjg, (fleh, gcmie), hkid), jbmkl -> abcd"(projsUL[x + 0, y - 1], T1[x + 0, y + 0], conj(pepsTensors[x + 0, y + 0]), projsUR[x + 0, y + 0], pepsTensors[x + 0, y + 0]);
-    nC2[x + 1, y + 0] = ein"adef, (dc, efbc) -> ab"(projsUL[x + 0, y + 0], C2[x + 0, y + 0], T2[x + 0, y + 0]);
+#     nC1[x + 1, y + 0] = ein"(afec, cd), defb -> ab"(T4[x + 0, y + 0], C1[x + 0, y + 0], projsUR[x + 0, y - 1]);
+#     nT1[x + 1, y + 0] = ein"(afjg, (fleh, gcmie), hkid), jbmkl -> abcd"(projsUL[x + 0, y - 1], T1[x + 0, y + 0], conj(pepsTensors[x + 0, y + 0]), projsUR[x + 0, y + 0], pepsTensors[x + 0, y + 0]);
+#     nC2[x + 1, y + 0] = ein"adef, (dc, efbc) -> ab"(projsUL[x + 0, y + 0], C2[x + 0, y + 0], T2[x + 0, y + 0]);
 
-    return nC1, nT1, nC2
+#     return nC1, nT1, nC2
 
-end
+# end
 
-function absorption_D!(nC3, nT3, nC4, T2, C3, T3, C4, T4, pepsTensors, projsDL, projsDR, (x, y))
+# function absorption_D!(nC3, nT3, nC4, T2, C3, T3, C4, T4, pepsTensors, projsDL, projsDR, (x, y))
     
-    nC3[x - 1, y + 0] = ein"defa, (fecb, dc) -> ab"(projsDL[x - 1, y + 0], T2[x + 0, y + 0], C3[x + 0, y + 0]);
-    nT3[x - 1, y + 0] = ein"(fgja, (fhek, gemic), bhil), jkmld -> abcd"(projsDL[x - 1, y - 1], T3[x + 0, y + 0], conj(pepsTensors[x + 0, y + 0]), projsDR[x - 1, y + 0], pepsTensors[x + 0, y + 0]);
-    nC4[x - 1, y + 0] = ein"(dc, cefb), adef -> ab"(C4[x + 0, y + 0], T4[x + 0, y + 0], projsDR[x - 1, y - 1]);
+#     nC3[x - 1, y + 0] = ein"defa, (fecb, dc) -> ab"(projsDL[x - 1, y + 0], T2[x + 0, y + 0], C3[x + 0, y + 0]);
+#     nT3[x - 1, y + 0] = ein"(fgja, (fhek, gemic), bhil), jkmld -> abcd"(projsDL[x - 1, y - 1], T3[x + 0, y + 0], conj(pepsTensors[x + 0, y + 0]), projsDR[x - 1, y + 0], pepsTensors[x + 0, y + 0]);
+#     nC4[x - 1, y + 0] = ein"(dc, cefb), adef -> ab"(C4[x + 0, y + 0], T4[x + 0, y + 0], projsDR[x - 1, y - 1]);
     
-    return nC3, nT3, nC4
+#     return nC3, nT3, nC4
 
-end
+# end
