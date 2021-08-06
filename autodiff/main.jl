@@ -14,14 +14,14 @@ Lx = 2;
 Ly = 1;
 unitCellLayout = [1 2 ; 2 1];
 
-chiB = 3;
+chiB = 2;
 d = 2;
 
 # CTMRG settings
 initMethod = 0;
 convTol = 1e-8;
 maxIter = 10;
-chiE = 5;
+chiE = 4;
 truncBelowE = 1e-6;
 
 # initialize iPEPS tensors
@@ -36,16 +36,21 @@ end
 # initMethod = 0;
 # CTMRGTensors = initializeCTMRGTensors(pepsTensors, unitCellLayout, chiE, initMethod = initMethod);
 
-σ₀ = [1 0; 0 1]
-σ₁ = [0 1; 1 0]
-σ₃ = [1 0; 0 -1]
+σ₀ = [1.0 0.0; 0.0  1.0]
+σ₁ = [0.0 1.0; 1.0  0.0]
+σ₃ = [1.0 0.0; 0.0 -1.0]
 σ₂ = -1im*σ₃*σ₁
 
-function isingTBG(h, J; id=0.0)
+function isingTBG(h, J; id = 0.0)
     reshape(h*(kron(σ₃, σ₀) + kron(σ₀, σ₃)) + J*kron(σ₁, σ₁) + id*kron(σ₀, σ₀), (2,2,2,2))
 end
 
-energyTBG = isingTBG(1., 1., id=0.0)
+function heisenbergTBG(Jx, Jy, Jz, h; id = 0.0)
+    reshape(Jx*kron(σ₁, σ₁) + Jy*kron(σ₂, σ₂) + Jz*kron(σ₃, σ₃) + h*(kron(σ₃, σ₀) + kron(σ₀, σ₃)) + id*kron(σ₀, σ₀), (2, 2, 2, 2))
+end
+
+# energyTBG = isingTBG(0.5, 1., id=0.0)
+energyTBG = heisenbergTBG(1.0, 1.0, 1.0, 0.0)
 
 
 function computeEnergy(pepsTensorsVec, unitCellLayout, chiE, truncBelowE, convTol, maxIter, initMethod, energyTBG)
@@ -72,10 +77,17 @@ end
     # end
 # end
 
-pepsTensors = rand(Float64, Lx, Ly, chiB, chiB, d, chiB, chiB);
+function optimizePEPS(pepsTensors, unitCellLayout, chiE, truncBelowE, convTol, maxIter, initMethod, energyTBG)
+   
+    optimmethod = LBFGS(m = 20);
+    optimargs = (Optim.Options(f_tol = 1e-6, show_trace = true), );
+    let energy = x -> real(computeEnergy(x, unitCellLayout, chiE, truncBelowE, convTol, maxIter, initMethod, energyTBG))
+        res = optimize(energy, Δ -> Zygote.gradient(energy, Δ)[1], pepsTensors, optimmethod, inplace = false, optimargs...);
+    end
 
-optimmethod = LBFGS(m = 20);
-optimargs = ();
-let energy = x -> real(computeEnergy(x, unitCellLayout, chiE, truncBelowE, convTol, maxIter, initMethod, energyTBG))
-    res = optimize(energy, Δ -> Zygote.gradient(energy, Δ)[1], pepsTensors, optimmethod, inplace = false, optimargs...)
+    return res;
+
 end
+
+pepsTensors = rand(Float64, Lx, Ly, chiB, chiB, d, chiB, chiB);
+minPEPS = optimizePEPS(pepsTensors, unitCellLayout, chiE, truncBelowE, convTol, maxIter, initMethod, energyTBG)

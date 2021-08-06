@@ -8,7 +8,7 @@ function runCTMRG(pepsTensors, unitCellLayout, chiE, truncBelowE, convTol, maxIt
     CTMRGTensors = initializeCTMRGTensors(pepsTensors, unitCellLayout, chiE, initMethod = initMethod);
 
     # sinVals = fill(Inf, Lx, Ly, 4 * chiE);
-    sinVals = [fill(Inf, 4 * chiE) for idx = 1 : Lx, idy = 1 : Ly];
+    sinVals = fill(fill(Inf, 4 * chiE), Lx, Ly);
 
     # construct struct for stopFunction
     stopFunc = StopFunction(Lx, Ly, sinVals, 0, convTol, maxIter, chiE);
