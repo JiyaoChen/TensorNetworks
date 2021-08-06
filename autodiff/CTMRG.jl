@@ -1,4 +1,8 @@
 
+include("absorptions.jl")
+include("computeIsometries.jl")
+include("fixedpoint.jl")
+
 function runCTMRG(pepsTensors, unitCellLayout, chiE, truncBelowE, convTol, maxIter, initMethod = 0)
 
     # get size
