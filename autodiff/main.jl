@@ -1,6 +1,9 @@
 #!/usr/bin/env julia
 
 # set project directory
+if ~any(occursin.(pwd(), LOAD_PATH))
+    push!(LOAD_PATH, pwd())
+end
 if ~any(occursin.(pwd() * "/autodiff", LOAD_PATH))
     push!(LOAD_PATH, pwd() * "/autodiff")
 end
@@ -8,6 +11,7 @@ end
 # clear console
 Base.run(`clear`)
 
+using OMEinsum
 using vPEPS
 using Profile
 
@@ -30,8 +34,8 @@ d = 2;
 initMethod = 0;
 convTol = 1e-8;
 maxIter = 10;
-chiE = 4;
-truncBelowE = 1e-12;
+chiE = 8;
+truncBelowE = 1e-8;
 
 # # initialize iPEPS tensors
 # pepsTensors = Array{Array{Float64, 5}, 2}(undef, Lx, Ly);
@@ -46,11 +50,15 @@ energyTBG = heisenbergTBG(1.0, 1.0, 1.0, 0.0);
 energyTBG = ein"aecf, be, fd -> abcd"(energyTBG, σ₁, σ₁');
 
 pepsTensors = rand(Float64, Lx, Ly, chiB, chiB, d, chiB, chiB);
-@profview minPEPS = optimizePEPS(pepsTensors, unitCellLayout, chiE, truncBelowE, convTol, maxIter, initMethod, energyTBG)
+# using vPEPS
+minPEPS = optimizePEPS(pepsTensors, unitCellLayout, chiE, truncBelowE, convTol, maxIter, initMethod, energyTBG)
 
 # final objective value
+# Lx = 1, Ly = 1
+# (2, 4) => -6.602310e-01
+# (2, 8) => 
+
 # Lx = 2, Ly = 2 - (chiB, chiE)
 # (2, 4) => -6.624950e-01 
-
 # @profview computeEnergy(pepsTensors, unitCellLayout, chiE, truncBelowE, convTol, maxIter, initMethod, energyTBG) # Heisenberg model: −0.6694421(4) [arXiv:1101.3281]
 # @time computeEnergy(pepsTensors, unitCellLayout, chiE, truncBelowE, convTol, maxIter, initMethod, energyTBG) # for the Heisenberg model: −0.6694421(4) [arXiv:1101.3281]

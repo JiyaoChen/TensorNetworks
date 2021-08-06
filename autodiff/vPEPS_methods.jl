@@ -74,86 +74,85 @@ end
 
 # initializers
 # @Zygote.nograd initializeC
-function initializeC(tensorType, χ, initMethod::Int)
+function initializeC(elementType::DataType, tensorDims::NTuple{5, Int64}, chiE::Int, initMethod::Int)
     if initMethod == 0
-        c = ones(tensorType, 1, 1);
+        c = ones(elementType, 1, 1);
     elseif initMethod == 1
-        c = randn(tensorType, χ, χ);
+        c = randn(elementType, chiE, chiE);
     end
     return c
 end
 
 # @Zygote.nograd initializeT1
-function initializeT1(tensorType, chiB, χ, initMethod::Int)
+function initializeT1(elementType::DataType, tensorDims::NTuple{5, Int64}, chiE::Int, initMethod::Int)
     if initMethod == 0
-        T1 = ones(tensorType, 1, chiB, chiB, 1);
+        T1 = ones(elementType, 1, tensorDims[5], tensorDims[5], 1);
     elseif initMethod == 1
-        T1 = randn(tensorType, χ, chiB, chiB, χ);
+        T1 = randn(elementType, chiE, tensorDims[5], tensorDims[5], chiE);
     end
     return T1
 end
 
 # @Zygote.nograd initializeT2
-function initializeT2(tensorType, chiB, χ, initMethod::Int)
+function initializeT2(elementType::DataType, tensorDims::NTuple{5, Int64}, chiE::Int, initMethod::Int)
     if initMethod == 0
-        T2 = ones(tensorType, chiB, chiB, 1, 1);
+        T2 = ones(elementType, tensorDims[4], tensorDims[4], 1, 1);
     elseif initMethod == 1
-        T2 = randn(tensorType, chiB, chiB, χ, χ);
+        T2 = randn(elementType, tensorDims[4], tensorDims[4], chiE, chiE);
     end
     return T2
 end
 
 # @Zygote.nograd initializeT3
-function initializeT3(tensorType, chiB, χ, initMethod::Int)
+function initializeT3(elementType::DataType, tensorDims::NTuple{5, Int64}, chiE::Int, initMethod::Int)
     if initMethod == 0
-        T3 = ones(tensorType, 1, 1, chiB, chiB);
+        T3 = ones(elementType, 1, 1, tensorDims[2], tensorDims[2]);
     elseif initMethod == 1
-        T3 = randn(tensorType, χ, χ, chiB, chiB);
+        T3 = randn(elementType, chiE, chiE, tensorDims[2], tensorDims[2]);
     end
     return T3
 end
 
 # @Zygote.nograd initializeT4
-function initializeT4(tensorType, chiB, χ, initMethod::Int)
+function initializeT4(elementType::DataType, tensorDims::NTuple{5, Int64}, chiE::Int, initMethod::Int)
     if initMethod == 0
-        T4 = ones(tensorType, 1, chiB, chiB, 1);
+        T4 = ones(elementType, 1, tensorDims[1], tensorDims[1], 1);
     elseif initMethod == 1
-        T4 = randn(tensorType, χ, chiB, chiB, χ);
+        T4 = randn(elementType, chiE, tensorDims[1], tensorDims[1], chiE);
     end
     return T4
 end
 
 # @Zygote.nograd initializeTensors
-function initializeTensors(initFunc, tensorArray::Array, χ, initMethod::Int, T, Lx, Ly, unitCellLayout)
+function initializeTensors(initFunc, elementType, dimensionsTensors, chiE, initMethod::Int, T, Lx, Ly, unitCellLayout)
     
     # initialize array with CTM tensors
-    tensorArray = Array{T, 2}([initFunc(tensorArray[idx, idy], χ, initMethod) for idx = 1 : Lx, idy = 1 : Ly]);
+    tensorArray = Array{T, 2}([initFunc(elementType, dimensionsTensors[idx, idy], chiE, initMethod) for idx = 1 : Lx, idy = 1 : Ly]);
     return tensorArray
 
 end
 
 # @Zygote.nograd initializeCTMRGTensors
-function initializeCTMRGTensors(pepsTensors, unitCellLayout, chiE::Int; initMethod = 0)
+function initializeCTMRGTensors(elementType, dimensionsTensors, unitCellLayout, chiE::Int; initMethod = 0)
     
     # get size
-    Lx, Ly = size(pepsTensors);
+    Lx, Ly = size(dimensionsTensors);
 
     # set types for C and T tensors
-    tensorType = eltype(eltype(pepsTensors));
-    typeC = Array{tensorType, 2};
-    typeT = Array{tensorType, 4};
+    typeC = Array{elementType, 2};
+    typeT = Array{elementType, 4};
 
-    C1 = initializeTensors(initializeC, tensorType, chiE, initMethod, typeC, Lx, Ly, unitCellLayout);
-    T1 = initializeTensors(initializeT1, pepsTensors, chiE, initMethod, typeT, Lx, Ly, unitCellLayout);
+    C1 = initializeTensors(initializeC, elementType, dimensionsTensors, chiE, initMethod, typeC, Lx, Ly, unitCellLayout);
+    T1 = initializeTensors(initializeT1, elementType, dimensionsTensors, chiE, initMethod, typeT, Lx, Ly, unitCellLayout);
 
-    C2 = initializeTensors(initializeC, tensorType, chiE, initMethod, typeC, Lx, Ly, unitCellLayout);
-    T2 = initializeTensors(initializeT2, pepsTensors, chiE, initMethod, typeT, Lx, Ly, unitCellLayout);
+    C2 = initializeTensors(initializeC, elementType, dimensionsTensors, chiE, initMethod, typeC, Lx, Ly, unitCellLayout);
+    T2 = initializeTensors(initializeT2, elementType, dimensionsTensors, chiE, initMethod, typeT, Lx, Ly, unitCellLayout);
 
-    C3 = initializeTensors(initializeC, tensorType, chiE, initMethod, typeC, Lx, Ly, unitCellLayout);
-    T3 = initializeTensors(initializeT3, pepsTensors, chiE, initMethod, typeT, Lx, Ly, unitCellLayout);
+    C3 = initializeTensors(initializeC, elementType, dimensionsTensors, chiE, initMethod, typeC, Lx, Ly, unitCellLayout);
+    T3 = initializeTensors(initializeT3, elementType, dimensionsTensors, chiE, initMethod, typeT, Lx, Ly, unitCellLayout);
 
-    C4 = initializeTensors(initializeC, tensorType, chiE, initMethod, typeC, Lx, Ly, unitCellLayout);
-    T4 = initializeTensors(initializeT4, pepsTensors, chiE, initMethod, typeT, Lx, Ly, unitCellLayout);
+    C4 = initializeTensors(initializeC, elementType, dimensionsTensors, chiE, initMethod, typeC, Lx, Ly, unitCellLayout);
+    T4 = initializeTensors(initializeT4, elementType, dimensionsTensors, chiE, initMethod, typeT, Lx, Ly, unitCellLayout);
 
     # return CTMRG tensors
     return C1, T1, C2, T2, C3, T3, C4, T4
