@@ -9,6 +9,8 @@
 module vPEPS
 
     # load packages
+    using Base.Iterators: drop, take
+    using IterTools: imap, iterated
     using LinearAlgebra
     using OMEinsum
     using Optim

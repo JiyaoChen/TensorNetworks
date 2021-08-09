@@ -25,8 +25,8 @@ function runCTMRG(pepsTensors, unitCellLayout, chiE, truncBelowE, convTol, maxIt
     # CTMRGTensors = CTMRGStep((CTMRGTensors..., sinVals), (pepsTensors, chiE, truncBelowE, d));
 
     # run fixedPoint CTMRG routine and return CTMRGTensors
-    # CTMRGTensors = fixedPoint(CTMRGStep, (CTMRGTensors..., sinVals), (pepsTensors, chiE, truncBelowE), stopFunc)[1 : end - 1];
     CTMRGTensors = fixedPoint(CTMRGStep, CTMRGTensors, (pepsTensors, unitCellLayout, chiE, truncBelowE), stopFunc);
+    # CTMRGTensors = fixedPointAD(CTMRGStep, CTMRGTensors, (pepsTensors, unitCellLayout, chiE, truncBelowE), stopFunc);
     return CTMRGTensors
 
 end
