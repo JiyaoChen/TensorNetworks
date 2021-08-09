@@ -55,7 +55,7 @@ minPEPS = optimizePEPS(pepsTensors, unitCellLayout, chiE, truncBelowE, convTol, 
 
 # final objective value
 # Lx = 1, Ly = 1
-# (2, 4) => -6.602310e-01
+# (2, 4) => -6.602310e-01 / -6.592901e-01
 # (2, 8) => 
 
 # Lx = 2, Ly = 2 - (chiB, chiE)

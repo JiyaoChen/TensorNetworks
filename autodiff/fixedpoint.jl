@@ -1,6 +1,4 @@
 
-using IterTools: iterated
-
 function fixedPoint(f, guess, init, stopFunc)
     for state in iterated(x -> f(x, init), guess)
         stopFunc(state) && return state
@@ -82,7 +80,9 @@ function fixedPointBackward(f, CTMRGTensors, (iPEPS, unitCellLayout, chiE, trunc
         for g in take(imap(back2, drop(iterated(back1, Δ), 1)), 100)
             grad .+= g[1]
             ng = norm(g[1])
+            # ng = norm(grad)
             if ng < 1e-7
+                # println("backprop converged")
                 break
             elseif ng > 10
                 println("backprop not converging")
@@ -95,6 +95,7 @@ function fixedPointBackward(f, CTMRGTensors, (iPEPS, unitCellLayout, chiE, trunc
         return (grad, nothing, nothing, nothing)
     end
     return backΔ
+
 end
 
 fixedPointAD(f, guess, init, stopFunc) = fixedPoint(f, guess, init, stopFunc);

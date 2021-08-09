@@ -12,7 +12,8 @@ function computeIsometries_LR(C1, T1, C2, T2, C3, T3, C4, T4, pepsTensors, unitC
     VU = VU';
 
     # truncate singular values
-    newChi = sum(SU .> truncBelowE);
+    # newChi = sum(SU .> truncBelowE);
+    newChi = min(chiE, length(SU));
     UU = UU[:, 1 : newChi];
     SU = SU[1 : newChi];
     VU = VU[1 : newChi, :];
@@ -33,7 +34,8 @@ function computeIsometries_LR(C1, T1, C2, T2, C3, T3, C4, T4, pepsTensors, unitC
     VD = VD';
 
     # truncate singular values
-    newChi = sum(SD .> truncBelowE);
+    # newChi = sum(SD .> truncBelowE);
+    newChi = min(chiE, length(SD));
     UD = UD[:, 1 : newChi];
     SD = SD[1 : newChi];
     VD = VD[1 : newChi, :];
@@ -53,7 +55,8 @@ function computeIsometries_LR(C1, T1, C2, T2, C3, T3, C4, T4, pepsTensors, unitC
     VL = VL';
 
     # truncate UL, SL and VL
-    newChi = min(chiE, sum(SL .> truncBelowE));
+    # newChi = min(chiE, sum(SL .> truncBelowE));
+    newChi = min(chiE, length(SL));
     UL = UL[:, 1 : newChi];
     SL = SL[1 : newChi];
     VL = VL[1 : newChi, :];
@@ -76,7 +79,8 @@ function computeIsometries_LR(C1, T1, C2, T2, C3, T3, C4, T4, pepsTensors, unitC
     VR = VR';
 
     # truncate UR, SR and VR
-    newChi = min(chiE, sum(SR .> truncBelowE));
+    # newChi = min(chiE, sum(SR .> truncBelowE));
+    newChi = min(chiE, length(SR));
     UR = UR[:, 1 : newChi];
     SR = SR[1 : newChi];
     VR = VR[1 : newChi, :];
@@ -110,7 +114,8 @@ function computeIsometries_UD(C1, T1, C2, T2, C3, T3, C4, T4, pepsTensors, unitC
     VL = VL';
 
     # truncate singular values
-    newChi = sum(SL .> truncBelowE);
+    # newChi = sum(SL .> truncBelowE);
+    newChi = min(chiE, length(SL));
     UL = UL[:, 1 : newChi];
     SL = SL[1 : newChi];
     VL = VL[1 : newChi, :];
@@ -130,7 +135,8 @@ function computeIsometries_UD(C1, T1, C2, T2, C3, T3, C4, T4, pepsTensors, unitC
     VR = VR';
 
     # truncate singular values
-    newChi = sum(SR .> truncBelowE);
+    # newChi = sum(SR .> truncBelowE);
+    newChi = min(chiE, length(SR));
     UR = UR[:, 1 : newChi];
     SR = SR[1 : newChi];
     VR = VR[1 : newChi, :];
@@ -149,7 +155,8 @@ function computeIsometries_UD(C1, T1, C2, T2, C3, T3, C4, T4, pepsTensors, unitC
     VU = VU';
 
     # truncate UU, SU and VU
-    newChi = min(chiE, sum(SU .> truncBelowE));
+    # newChi = min(chiE, sum(SU .> truncBelowE));
+    newChi = min(chiE, length(SU));
     UU = UU[:, 1 : newChi];
     SU = SU[1 : newChi];
     VU = VU[1 : newChi, :];
@@ -172,7 +179,8 @@ function computeIsometries_UD(C1, T1, C2, T2, C3, T3, C4, T4, pepsTensors, unitC
     VD = VD';
 
     # truncate UD, SD and VD
-    newChi = min(chiE, sum(SD .> truncBelowE));
+    # newChi = min(chiE, sum(SD .> truncBelowE));
+    newChi = min(chiE, length(SD));
     UD = UD[:, 1 : newChi];
     SD = SD[1 : newChi];
     VD = VD[1 : newChi, :];
