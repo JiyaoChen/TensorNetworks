@@ -119,6 +119,23 @@ function absorption_L(C1, T1, T3, C4, T4, pepsTensors, unitCellLayout, projsUL, 
 
 end
 
+function absorption_L2(C1, T1, T3, C4, T4, pepsTensors, unitCellLayout, projsUL, projsDL, (x, y))
+
+    # get size
+    Lx, Ly = size(pepsTensors);
+    
+    nC4 = ein"(cd, cafe), defb -> ab"(C4[getCoordinates(x + 0, Lx, y + 0, Ly, unitCellLayout)...], T3[getCoordinates(x + 0, Lx, y + 0, Ly, unitCellLayout)...], projsUL[getCoordinates(x + 0, Lx, y + 0, Ly, unitCellLayout)[1]]);
+    nT4 = ein"(afkg, (fejh, egmbi), hlid), jkmcl -> abcd"(projsDL[getCoordinates(x + 0, Lx, y + 0, Ly, unitCellLayout)[1]], T4[getCoordinates(x + 0, Lx, y + 0, Ly, unitCellLayout)...], conj(pepsTensors[getCoordinates(x + 0, Lx, y + 0, Ly, unitCellLayout)...]), projsUL[getCoordinates(x - 1, Lx, y + 0, Ly, unitCellLayout)[1]], pepsTensors[getCoordinates(x + 0, Lx, y + 0, Ly, unitCellLayout)...]);
+    nC1 = ein"adef, (dc, cefb) -> ab"(projsDL[getCoordinates(x - 1, Lx, y + 0, Ly, unitCellLayout)[1]], C1[getCoordinates(x + 0, Lx, y + 0, Ly, unitCellLayout)...], T1[getCoordinates(x + 0, Lx, y + 0, Ly, unitCellLayout)...]);
+
+    nC4 /= norm(nC4);
+    nT4 /= norm(nT4);
+    nC1 /= norm(nC1);
+
+    return nC4, nT4, nC1
+
+end
+
 function absorption_R(T1, C2, T2, C3, T3, pepsTensors, unitCellLayout, projsUR, projsDR, (x, y))
 
     # get size
@@ -135,6 +152,22 @@ function absorption_R(T1, C2, T2, C3, T3, pepsTensors, unitCellLayout, projsUR, 
     return nC2, nT2, nC3
 end
 
+function absorption_R2(T1, C2, T2, C3, T3, pepsTensors, unitCellLayout, projsUR, projsDR, (x, y))
+
+    # get size
+    Lx, Ly = size(pepsTensors);
+    
+    nC2 = ein"(adec, cf), fedb -> ab"(T1[getCoordinates(x + 0, Lx, y + 0, Ly, unitCellLayout)...], C2[getCoordinates(x + 0, Lx, y + 0, Ly, unitCellLayout)...], projsDR[getCoordinates(x - 1, Lx, y - 1, Ly, unitCellLayout)[1]]);
+    nT2 = ein"(fgjc, (kefh, bgmei), dhil), ajmkl -> abcd"(projsDR[getCoordinates(x + 0, Lx, y - 1, Ly, unitCellLayout)[1]], T2[getCoordinates(x + 0, Lx, y + 0, Ly, unitCellLayout)...], conj(pepsTensors[getCoordinates(x + 0, Lx, y + 0, Ly, unitCellLayout)...]), projsUR[getCoordinates(x - 1, Lx, y - 1, Ly, unitCellLayout)[1]], pepsTensors[getCoordinates(x + 0, Lx, y + 0, Ly, unitCellLayout)...]);
+    nC3 = ein"bdef, (acef, cd) -> ab"(projsUR[getCoordinates(x + 0, Lx, y - 1, Ly, unitCellLayout)[1]], T3[getCoordinates(x + 0, Lx, y + 0, Ly, unitCellLayout)...], C3[getCoordinates(x + 0, Lx, y + 0, Ly, unitCellLayout)...]);
+
+    nC2 /= norm(nC2);
+    nT2 /= norm(nT2);
+    nC3 /= norm(nC3);
+
+    return nC2, nT2, nC3
+end
+
 function absorption_U(T4, C1, T1, C2, T2, pepsTensors, unitCellLayout, projsUL, projsUR, (x, y))
 
     # get size
@@ -143,6 +176,23 @@ function absorption_U(T4, C1, T1, C2, T2, pepsTensors, unitCellLayout, projsUL, 
     nC1 = ein"(afec, cd), defb -> ab"(T4[getCoordinates(x + 0, Lx, y + 0, Ly, unitCellLayout)...], C1[getCoordinates(x + 0, Lx, y + 0, Ly, unitCellLayout)...], projsUR[getCoordinates(x + 0, Lx, y - 1, Ly, unitCellLayout)...]);
     nT1 = ein"(afjg, (fleh, gcmie), hkid), jbmkl -> abcd"(projsUL[getCoordinates(x + 0, Lx, y - 1, Ly, unitCellLayout)...], T1[getCoordinates(x + 0, Lx, y + 0, Ly, unitCellLayout)...], conj(pepsTensors[getCoordinates(x + 0, Lx, y + 0, Ly, unitCellLayout)...]), projsUR[getCoordinates(x + 0, Lx, y + 0, Ly, unitCellLayout)...], pepsTensors[getCoordinates(x + 0, Lx, y + 0, Ly, unitCellLayout)...]);
     nC2 = ein"adef, (dc, efbc) -> ab"(projsUL[getCoordinates(x + 0, Lx, y + 0, Ly, unitCellLayout)...], C2[getCoordinates(x + 0, Lx, y + 0, Ly, unitCellLayout)...], T2[getCoordinates(x + 0, Lx, y + 0, Ly, unitCellLayout)...]);
+
+    nC1 /= norm(nC1);
+    nT1 /= norm(nT1);
+    nC2 /= norm(nC2);
+
+    return nC1, nT1, nC2
+
+end
+
+function absorption_U2(T4, C1, T1, C2, T2, pepsTensors, unitCellLayout, projsUL, projsUR, (x, y))
+
+    # get size
+    Lx, Ly = size(pepsTensors);
+    
+    nC1 = ein"(afec, cd), defb -> ab"(T4[getCoordinates(x + 0, Lx, y + 0, Ly, unitCellLayout)...], C1[getCoordinates(x + 0, Lx, y + 0, Ly, unitCellLayout)...], projsUR[getCoordinates(x + 0, Lx, y - 1, Ly, unitCellLayout)[2]]);
+    nT1 = ein"(afjg, (fleh, gcmie), hkid), jbmkl -> abcd"(projsUL[getCoordinates(x + 0, Lx, y - 1, Ly, unitCellLayout)[2]], T1[getCoordinates(x + 0, Lx, y + 0, Ly, unitCellLayout)...], conj(pepsTensors[getCoordinates(x + 0, Lx, y + 0, Ly, unitCellLayout)...]), projsUR[getCoordinates(x + 0, Lx, y + 0, Ly, unitCellLayout)[2]], pepsTensors[getCoordinates(x + 0, Lx, y + 0, Ly, unitCellLayout)...]);
+    nC2 = ein"adef, (dc, efbc) -> ab"(projsUL[getCoordinates(x + 0, Lx, y + 0, Ly, unitCellLayout)[2]], C2[getCoordinates(x + 0, Lx, y + 0, Ly, unitCellLayout)...], T2[getCoordinates(x + 0, Lx, y + 0, Ly, unitCellLayout)...]);
 
     nC1 /= norm(nC1);
     nT1 /= norm(nT1);

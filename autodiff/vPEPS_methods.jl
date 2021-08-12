@@ -46,7 +46,16 @@ function getCoordinates(latticeIdx, Lx, latticeIdy, Ly, unitCellLayout)
     tensorIdx = CartesianIndices(tensorNumbers)[tensorNum];
     posX = tensorIdx[1];
     posY = tensorIdx[2];
+
     return posX, posY;
+
+end
+
+function toTensorNum(lx, Lx, ly, Ly)
+
+    tensorNumbering = reshape(collect(1 : Lx * Ly), Lx, Ly);
+
+    return tensorNumbering[lx, ly]
 
 end
 
