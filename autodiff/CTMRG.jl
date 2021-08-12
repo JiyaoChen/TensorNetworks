@@ -1,5 +1,6 @@
 
 include("absorptions.jl")
+include("absorptions2.jl")
 include("computeIsometries.jl")
 include("fixedpoint.jl")
 
@@ -34,10 +35,17 @@ end
 # function CTMRGStep((C1, T1, C2, T2, C3, T3, C4, T4, sinVals), (pepsTensors, chiE, truncBelowE))
 function CTMRGStep(CTMRGTensors, (pepsTensors, unitCellLayout, chiE, truncBelowE))
 
-    # do bi-directinal absorptions towards LR and UD
     C1, T1, C2, T2, C3, T3, C4, T4 = CTMRGTensors;
-    C4, T4, C1, C2, T2, C3 = absorptionStep_LR(C1, T1, C2, T2, C3, T3, C4, T4, pepsTensors, unitCellLayout, chiE, truncBelowE);
-    C1, T1, C2, C3, T3, C4 = absorptionStep_UD(C1, T1, C2, T2, C3, T3, C4, T4, pepsTensors, unitCellLayout, chiE, truncBelowE);
+
+    # absorb uni-directional
+    C4, T4, C1 = absorptionStep_L2(C1, T1, C2, T2, C3, T3, C4, T4, pepsTensors, unitCellLayout, chiE, truncBelowE);
+    C1, T1, C2 = absorptionStep_U2(C1, T1, C2, T2, C3, T3, C4, T4, pepsTensors, unitCellLayout, chiE, truncBelowE);
+    C2, T2, C3 = absorptionStep_R2(C1, T1, C2, T2, C3, T3, C4, T4, pepsTensors, unitCellLayout, chiE, truncBelowE);
+    C3, T3, C4 = absorptionStep_D2(C1, T1, C2, T2, C3, T3, C4, T4, pepsTensors, unitCellLayout, chiE, truncBelowE);
+
+    # # absorb bi-directional
+    # C4, T4, C1, C2, T2, C3 = absorptionStep_LR(C1, T1, C2, T2, C3, T3, C4, T4, pepsTensors, unitCellLayout, chiE, truncBelowE);
+    # C1, T1, C2, C3, T3, C4 = absorptionStep_UD(C1, T1, C2, T2, C3, T3, C4, T4, pepsTensors, unitCellLayout, chiE, truncBelowE);
 
     return (C1, T1, C2, T2, C3, T3, C4, T4)
 
