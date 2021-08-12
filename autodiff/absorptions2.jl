@@ -1,4 +1,8 @@
 
+function periodicIndex(idx, arrayLength)
+    return mod(idx - 1, arrayLength) + 1;
+end
+
 function absorptionStep_L2(C1, T1, C2, T2, C3, T3, C4, T4, pepsTensors, unitCellLayout, chiE, truncBelowE)
 
     # get size of unit cell
@@ -8,20 +12,28 @@ function absorptionStep_L2(C1, T1, C2, T2, C3, T3, C4, T4, pepsTensors, unitCell
     # loop over all tensor in y-direction
     for ucLy = 1 : +1 : unitCellLy
 
+        # unitCellCol = unitCellLayout[:, ucLy];
+
         # compute projectore for one column
-        allProjectors = [computeIsometries_LR(C1, T1, C2, T2, C3, T3, C4, T4, pepsTensors, unitCellLayout, chiE, truncBelowE, (ucLx, ucLy)) for ucLx = 1 : unitCellLx];
+        allProjectors = [computeIsometries_LR(C1, T1, C2, T2, C3, T3, C4, T4, pepsTensors, unitCellLayout, chiE, truncBelowE, (ucLx, ucLy), 'L') for ucLx = 1 : unitCellLx];
         projsUL = [proj[1] for proj in allProjectors];
         projsDL = [proj[2] for proj in allProjectors];
         # projsUR = [proj[3] for proj in allProjectors];
         # projsDR = [proj[4] for proj in allProjectors];
 
         # make absorption of one column
-        absorbedTensorsL = [absorption_L2(C1, T1, T3, C4, T4, pepsTensors, unitCellLayout, projsUL, projsDL, (ucLx, ucLy)) for ucLx = 1 : unitCellLx];
+        absorbedTensorsL = [absorption_L3(C1, T1, T3, C4, T4, pepsTensors, unitCellLayout, projsUL, projsDL, (ucLx, ucLy)) for ucLx = 1 : unitCellLx];
+
+        assignToTensors = unitCellLayout[:, periodicIndex(ucLy, unitCellLy)];
+
+        C4 = [toTensorNum(lx, Lx, ly, Ly) == unitCellLayout[getCoordinates(lx + 0, Lx, ucLy + 1, Ly, unitCellLayout)...] ? absorbedTensorsL[getCoordinates(lx + 0, Lx, ucLy + 1, Ly, unitCellLayout)[1]][1] : C4[lx, ly] for lx = 1 : Lx, ly = 1 : Ly];
+        T4 = [toTensorNum(lx, Lx, ly, Ly) == unitCellLayout[getCoordinates(lx + 0, Lx, ucLy + 1, Ly, unitCellLayout)...] ? absorbedTensorsL[getCoordinates(lx + 0, Lx, ucLy + 1, Ly, unitCellLayout)[1]][2] : T4[lx, ly] for lx = 1 : Lx, ly = 1 : Ly];
+        C1 = [toTensorNum(lx, Lx, ly, Ly) == unitCellLayout[getCoordinates(lx + 0, Lx, ucLy + 1, Ly, unitCellLayout)...] ? absorbedTensorsL[getCoordinates(lx + 0, Lx, ucLy + 1, Ly, unitCellLayout)[1]][3] : C1[lx, ly] for lx = 1 : Lx, ly = 1 : Ly];
 
         # set updated tensors (please)
-        C4 = [toTensorNum(lx, Lx, ly, Ly) == unitCellLayout[getCoordinates(lx + 0, Lx, ucLy + 1, Ly, unitCellLayout)...] ? absorbedTensorsL[lx][1] : C4[lx, ly] for lx = 1 : Lx, ly = 1 : Ly];
-        T4 = [toTensorNum(lx, Lx, ly, Ly) == unitCellLayout[getCoordinates(lx + 0, Lx, ucLy + 1, Ly, unitCellLayout)...] ? absorbedTensorsL[lx][2] : T4[lx, ly] for lx = 1 : Lx, ly = 1 : Ly];
-        C1 = [toTensorNum(lx, Lx, ly, Ly) == unitCellLayout[getCoordinates(lx + 0, Lx, ucLy + 1, Ly, unitCellLayout)...] ? absorbedTensorsL[lx][3] : C1[lx, ly] for lx = 1 : Lx, ly = 1 : Ly];
+        # C4 = [toTensorNum(lx, Lx, ly, Ly) == unitCellLayout[getCoordinates(lx + 0, Lx, ucLy + 1, Ly, unitCellLayout)...] ? absorbedTensorsL[getCoordinates(lx + 0, Lx, ucLy + 1, Ly, unitCellLayout)[1]][1] : C4[lx, ly] for lx = 1 : Lx, ly = 1 : Ly];
+        # T4 = [toTensorNum(lx, Lx, ly, Ly) == unitCellLayout[getCoordinates(lx + 0, Lx, ucLy + 1, Ly, unitCellLayout)...] ? absorbedTensorsL[getCoordinates(lx + 0, Lx, ucLy + 1, Ly, unitCellLayout)[1]][2] : T4[lx, ly] for lx = 1 : Lx, ly = 1 : Ly];
+        # C1 = [toTensorNum(lx, Lx, ly, Ly) == unitCellLayout[getCoordinates(lx + 0, Lx, ucLy + 1, Ly, unitCellLayout)...] ? absorbedTensorsL[getCoordinates(lx + 0, Lx, ucLy + 1, Ly, unitCellLayout)[1]][3] : C1[lx, ly] for lx = 1 : Lx, ly = 1 : Ly];
 
     end
 
@@ -39,20 +51,20 @@ function absorptionStep_U2(C1, T1, C2, T2, C3, T3, C4, T4, pepsTensors, unitCell
     for ucLx = 1 : +1 : unitCellLx
 
         # compute projectore for one row
-        allProjectors = [computeIsometries_UD(C1, T1, C2, T2, C3, T3, C4, T4, pepsTensors, unitCellLayout, chiE, truncBelowE, (ucLx, ucLy)) for ucLy = 1 : unitCellLy];
+        allProjectors = [computeIsometries_UD(C1, T1, C2, T2, C3, T3, C4, T4, pepsTensors, unitCellLayout, chiE, truncBelowE, (ucLx, ucLy), 'U') for ucLy = 1 : unitCellLy];
         projsUL = [proj[1] for proj in allProjectors];
         projsUR = [proj[2] for proj in allProjectors];
         # projsDL = [proj[3] for proj in allProjectors];
         # projsDR = [proj[4] for proj in allProjectors];
 
         # make absorption of one row
-        absorbedTensorsU = [absorption_U2(T4, C1, T1, C2, T2, pepsTensors, unitCellLayout, projsUL, projsUR, (ucLx, ucLy)) for ucLy = 1 : unitCellLy];
+        absorbedTensorsU = [absorption_U3(T4, C1, T1, C2, T2, pepsTensors, unitCellLayout, projsUL, projsUR, (ucLx, ucLy)) for ucLy = 1 : unitCellLy];
 
         # set updated tensors (please)
-        C1 = [toTensorNum(lx, Lx, ly, Ly) == unitCellLayout[getCoordinates(ucLx + 1, Lx, ly + 0, Ly, unitCellLayout)...] ? absorbedTensorsU[ly][1] : C1[lx, ly] for lx = 1 : Lx, ly = 1 : Ly];
-        T1 = [toTensorNum(lx, Lx, ly, Ly) == unitCellLayout[getCoordinates(ucLx + 1, Lx, ly + 0, Ly, unitCellLayout)...] ? absorbedTensorsU[ly][2] : T1[lx, ly] for lx = 1 : Lx, ly = 1 : Ly];
-        C2 = [toTensorNum(lx, Lx, ly, Ly) == unitCellLayout[getCoordinates(ucLx + 1, Lx, ly + 0, Ly, unitCellLayout)...] ? absorbedTensorsU[ly][3] : C2[lx, ly] for lx = 1 : Lx, ly = 1 : Ly];
-
+        C1 = [toTensorNum(lx, Lx, ly, Ly) == unitCellLayout[getCoordinates(ucLx + 1, Lx, ly + 0, Ly, unitCellLayout)...] ? absorbedTensorsU[getCoordinates(ucLx + 1, Lx, ly + 0, Ly, unitCellLayout)[2]][1] : C1[lx, ly] for lx = 1 : Lx, ly = 1 : Ly];
+        T1 = [toTensorNum(lx, Lx, ly, Ly) == unitCellLayout[getCoordinates(ucLx + 1, Lx, ly + 0, Ly, unitCellLayout)...] ? absorbedTensorsU[getCoordinates(ucLx + 1, Lx, ly + 0, Ly, unitCellLayout)[2]][2] : T1[lx, ly] for lx = 1 : Lx, ly = 1 : Ly];
+        C2 = [toTensorNum(lx, Lx, ly, Ly) == unitCellLayout[getCoordinates(ucLx + 1, Lx, ly + 0, Ly, unitCellLayout)...] ? absorbedTensorsU[getCoordinates(ucLx + 1, Lx, ly + 0, Ly, unitCellLayout)[2]][3] : C2[lx, ly] for lx = 1 : Lx, ly = 1 : Ly];
+        
         # # get updated tensors
         # C1 = [allTensorsU[getCoordinates(idx + 1, Lx, idy + 0, Ly, unitCellLayout)...][1] for idx = 1 : Lx, idy = 1 : Ly];
         # T1 = [allTensorsU[getCoordinates(idx + 1, Lx, idy + 0, Ly, unitCellLayout)...][2] for idx = 1 : Lx, idy = 1 : Ly];
@@ -74,19 +86,19 @@ function absorptionStep_R2(C1, T1, C2, T2, C3, T3, C4, T4, pepsTensors, unitCell
     for ucLy = unitCellLy : -1 : 1
 
         # compute projectore for one column
-        allProjectors = [computeIsometries_LR(C1, T1, C2, T2, C3, T3, C4, T4, pepsTensors, unitCellLayout, chiE, truncBelowE, (ucLx, ucLy)) for ucLx = 1 : unitCellLx];
+        allProjectors = [computeIsometries_LR(C1, T1, C2, T2, C3, T3, C4, T4, pepsTensors, unitCellLayout, chiE, truncBelowE, (ucLx, ucLy), 'R') for ucLx = 1 : unitCellLx];
         # projsUL = hcat(projsUL, [proj[1] for proj in allProjectors]);
         # projsDL = hcat(projsDL, [proj[2] for proj in allProjectors]);
         projsUR = [proj[3] for proj in allProjectors];
         projsDR = [proj[4] for proj in allProjectors];
 
         # make absorption of one column
-        absorbedTensorsR = [absorption_R2(T1, C2, T2, C3, T3, pepsTensors, unitCellLayout, projsUR, projsDR, (ucLx, ucLy)) for ucLx = 1 : unitCellLx];
+        absorbedTensorsR = [absorption_R3(T1, C2, T2, C3, T3, pepsTensors, unitCellLayout, projsUR, projsDR, (ucLx, ucLy)) for ucLx = 1 : unitCellLx];
 
         # set updated tensors
-        C2 = [toTensorNum(lx, Lx, ly, Ly) == unitCellLayout[getCoordinates(lx + 0, Lx, ucLy - 1, Ly, unitCellLayout)...] ? absorbedTensorsR[lx][1] : C2[lx, ly] for lx = 1 : Lx, ly = 1 : Ly];
-        T2 = [toTensorNum(lx, Lx, ly, Ly) == unitCellLayout[getCoordinates(lx + 0, Lx, ucLy - 1, Ly, unitCellLayout)...] ? absorbedTensorsR[lx][2] : T2[lx, ly] for lx = 1 : Lx, ly = 1 : Ly];
-        C3 = [toTensorNum(lx, Lx, ly, Ly) == unitCellLayout[getCoordinates(lx + 0, Lx, ucLy - 1, Ly, unitCellLayout)...] ? absorbedTensorsR[lx][3] : C3[lx, ly] for lx = 1 : Lx, ly = 1 : Ly];
+        C2 = [toTensorNum(lx, Lx, ly, Ly) == unitCellLayout[getCoordinates(lx + 0, Lx, ucLy - 1, Ly, unitCellLayout)...] ? absorbedTensorsR[getCoordinates(lx + 0, Lx, ucLy - 1, Ly, unitCellLayout)[1]][1] : C2[lx, ly] for lx = 1 : Lx, ly = 1 : Ly];
+        T2 = [toTensorNum(lx, Lx, ly, Ly) == unitCellLayout[getCoordinates(lx + 0, Lx, ucLy - 1, Ly, unitCellLayout)...] ? absorbedTensorsR[getCoordinates(lx + 0, Lx, ucLy - 1, Ly, unitCellLayout)[1]][2] : T2[lx, ly] for lx = 1 : Lx, ly = 1 : Ly];
+        C3 = [toTensorNum(lx, Lx, ly, Ly) == unitCellLayout[getCoordinates(lx + 0, Lx, ucLy - 1, Ly, unitCellLayout)...] ? absorbedTensorsR[getCoordinates(lx + 0, Lx, ucLy - 1, Ly, unitCellLayout)[1]][3] : C3[lx, ly] for lx = 1 : Lx, ly = 1 : Ly];
 
         # # get updated tensors
         # C2 = [allTensorsR[getCoordinates(idx + 0, Lx, idy - 1, Ly, unitCellLayout)...][1] for idx = 1 : Lx, idy = 1 : Ly];
@@ -109,19 +121,19 @@ function absorptionStep_D2(C1, T1, C2, T2, C3, T3, C4, T4, pepsTensors, unitCell
     for ucLx = unitCellLx : -1 : unitCellLx
 
         # compute projectore for one row
-        allProjectors = [computeIsometries_UD(C1, T1, C2, T2, C3, T3, C4, T4, pepsTensors, unitCellLayout, chiE, truncBelowE, (ucLx, ucLy)) for ucLy = 1 : unitCellLy];
+        allProjectors = [computeIsometries_UD(C1, T1, C2, T2, C3, T3, C4, T4, pepsTensors, unitCellLayout, chiE, truncBelowE, (ucLx, ucLy), 'D') for ucLy = 1 : unitCellLy];
         # projsUL = [proj[1] for proj in allProjectors];
         # projsUR = [proj[2] for proj in allProjectors];
         projsDL = [proj[3] for proj in allProjectors];
         projsDR = [proj[4] for proj in allProjectors];
 
         # make absorption of one row
-        absorbedTensorsD = [absorption_D(T2, C3, T3, C4, T4, pepsTensors, unitCellLayout, projsDL, projsDR, (ucLx, ucLy)) for ucLy = 1 : unitCellLy];
+        absorbedTensorsD = [absorption_D3(T2, C3, T3, C4, T4, pepsTensors, unitCellLayout, projsDL, projsDR, (ucLx, ucLy)) for ucLy = 1 : unitCellLy];
 
         # set updated tensors (please)
-        C3 = [toTensorNum(lx, Lx, ly, Ly) == unitCellLayout[getCoordinates(ucLx + 1, Lx, ly + 0, Ly, unitCellLayout)...] ? absorbedTensorsD[ly][1] : C3[lx, ly] for lx = 1 : Lx, ly = 1 : Ly];
-        T3 = [toTensorNum(lx, Lx, ly, Ly) == unitCellLayout[getCoordinates(ucLx + 1, Lx, ly + 0, Ly, unitCellLayout)...] ? absorbedTensorsD[ly][2] : T3[lx, ly] for lx = 1 : Lx, ly = 1 : Ly];
-        C4 = [toTensorNum(lx, Lx, ly, Ly) == unitCellLayout[getCoordinates(ucLx + 1, Lx, ly + 0, Ly, unitCellLayout)...] ? absorbedTensorsD[ly][3] : C4[lx, ly] for lx = 1 : Lx, ly = 1 : Ly];
+        C3 = [toTensorNum(lx, Lx, ly, Ly) == unitCellLayout[getCoordinates(ucLx - 1, Lx, ly + 0, Ly, unitCellLayout)...] ? absorbedTensorsD[getCoordinates(ucLx - 1, Lx, ly + 0, Ly, unitCellLayout)[2]][1] : C3[lx, ly] for lx = 1 : Lx, ly = 1 : Ly];
+        T3 = [toTensorNum(lx, Lx, ly, Ly) == unitCellLayout[getCoordinates(ucLx - 1, Lx, ly + 0, Ly, unitCellLayout)...] ? absorbedTensorsD[getCoordinates(ucLx - 1, Lx, ly + 0, Ly, unitCellLayout)[2]][2] : T3[lx, ly] for lx = 1 : Lx, ly = 1 : Ly];
+        C4 = [toTensorNum(lx, Lx, ly, Ly) == unitCellLayout[getCoordinates(ucLx - 1, Lx, ly + 0, Ly, unitCellLayout)...] ? absorbedTensorsD[getCoordinates(ucLx - 1, Lx, ly + 0, Ly, unitCellLayout)[2]][3] : C4[lx, ly] for lx = 1 : Lx, ly = 1 : Ly];
 
         # # get updated tensors
         # C3 = [allTensorsD[getCoordinates(idx - 1, Lx, idy + 0, Ly, unitCellLayout)...][1] for idx = 1 : Lx, idy = 1 : Ly];

@@ -13,10 +13,11 @@ end
 
 function computeEnergy(pepsTensorsVec, unitCellLayout, chiE, truncBelowE, convTol, maxIter, initMethod, energyTBG)
 
-    # reshape pepsTensor into array of iPEPS tensors
-    Lx = size(pepsTensorsVec, 1);
-    Ly = size(pepsTensorsVec, 2);
-    pepsTensors = [pepsTensorsVec[idx, idy, :, :, :, :, :] for idx = 1 : Lx, idy = 1 : Ly];
+    # # reshape pepsTensor into array of iPEPS tensors
+    # Lx = size(pepsTensorsVec, 1);
+    # Ly = size(pepsTensorsVec, 2);
+    # pepsTensors = [pepsTensorsVec[idx, idy, :, :, :, :, :] for idx = 1 : Lx, idy = 1 : Ly];
+    pepsTensors = pepsTensorsVec;
 
     # run CTMRG
     CTMRGTensors = runCTMRG(pepsTensors, unitCellLayout, chiE, truncBelowE, convTol, maxIter, initMethod);

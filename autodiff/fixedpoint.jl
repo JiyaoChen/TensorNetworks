@@ -58,7 +58,7 @@ function (stopFunc::StopFunction)(stateCTMRG)
 
     diff = norm(newSingularValues .- stopFunc.oldvals)
     # @printf("convergence CTMRG step %d : %0.6e\n", stopFunc.counter, diff)
-    # println(diff)
+    @show diff
     diff <= stopFunc.tol && return true
     stopFunc.oldvals = newSingularValues
 

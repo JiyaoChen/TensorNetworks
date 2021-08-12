@@ -20,13 +20,17 @@ using Profile
 include("models.jl")
 
 # iPEPS settings
+Lx = 1;
+Ly = 1;
+unitCellLayout = [1 1 ; 1 1];
+
+# Lx = 2;
+# Ly = 1;
+# unitCellLayout = [1 2 ; 2 1];
+
 # Lx = 2;
 # Ly = 2;
 # unitCellLayout = [1 3 ; 2 4];
-
-Lx = 2;
-Ly = 2;
-unitCellLayout = [1 3 ; 2 4];
 
 chiB = 2;
 d = 2;
@@ -34,23 +38,26 @@ d = 2;
 # CTMRG settings
 initMethod = 0;
 convTol = 1e-8;
-maxIter = 10;
+maxIter = 100;
 chiE = 8;
 truncBelowE = 1e-8;
 
-# # initialize iPEPS tensors
-# pepsTensors = Array{Array{Float64, 5}, 2}(undef, Lx, Ly);
-# for idx = 1 : Lx, idy = 1 : Ly
-#     pepsTensors[idx, idy] = randn(chiB, chiB, d, chiB, chiB);
-# end
-# pepsTensors[1, 1] = randn(3, 5, d, 4, 6);
-# pepsTensors[2, 1] = randn(4, 6, d, 3, 5);
+# initialize iPEPS tensors
+pepsTensors = Array{Array{Float64, 5}, 2}(undef, Lx, Ly);
+A = randn(chiB, chiB, d, chiB, chiB);
+for idx = 1 : Lx, idy = 1 : Ly
+    pepsTensors[idx, idy] = randn(chiB, chiB, d, chiB, chiB);
+end
+# pepsTensors[1, 1] = randn(2, 3, d, 4, 5);
+# pepsTensors[2, 1] = randn(9, 5, d, 8, 3);
+# pepsTensors[1, 2] = randn(4, 6, d, 2, 7);
+# pepsTensors[2, 2] = randn(8 ,7, d, 9, 6);
 
-# energyTBG = isingTBG(0.5, 1., id=0.0)
+# energyTBG = isingTBG(0.5, 1., id = 0.0)
 energyTBG = heisenbergTBG(1.0, 1.0, 1.0, 0.0);
 energyTBG = ein"aecf, be, fd -> abcd"(energyTBG, σ₁, σ₁');
 
-pepsTensors = rand(Float64, Lx, Ly, chiB, chiB, d, chiB, chiB);
+# pepsTensors = rand(Float64, Lx, Ly, chiB, chiB, d, chiB, chiB);
 # using vPEPS
 computeEnergy(pepsTensors, unitCellLayout, chiE, truncBelowE, convTol, maxIter, initMethod, energyTBG)
 # minPEPS = optimizePEPS(pepsTensors, unitCellLayout, chiE, truncBelowE, convTol, maxIter, initMethod, energyTBG)
