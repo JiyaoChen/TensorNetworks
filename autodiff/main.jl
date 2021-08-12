@@ -12,6 +12,7 @@ end
 Base.run(`clear`)
 
 using OMEinsum
+using Revise
 using vPEPS
 using Profile
 
@@ -23,9 +24,9 @@ include("models.jl")
 # Ly = 2;
 # unitCellLayout = [1 3 ; 2 4];
 
-Lx = 1;
-Ly = 1;
-unitCellLayout = [1 1 ; 1 1];
+Lx = 2;
+Ly = 2;
+unitCellLayout = [1 3 ; 2 4];
 
 chiB = 2;
 d = 2;
@@ -51,7 +52,8 @@ energyTBG = ein"aecf, be, fd -> abcd"(energyTBG, σ₁, σ₁');
 
 pepsTensors = rand(Float64, Lx, Ly, chiB, chiB, d, chiB, chiB);
 # using vPEPS
-minPEPS = optimizePEPS(pepsTensors, unitCellLayout, chiE, truncBelowE, convTol, maxIter, initMethod, energyTBG)
+computeEnergy(pepsTensors, unitCellLayout, chiE, truncBelowE, convTol, maxIter, initMethod, energyTBG)
+# minPEPS = optimizePEPS(pepsTensors, unitCellLayout, chiE, truncBelowE, convTol, maxIter, initMethod, energyTBG)
 
 # final objective value
 # Lx = 1, Ly = 1
