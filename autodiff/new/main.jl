@@ -4,8 +4,8 @@
 if ~any(occursin.(pwd(), LOAD_PATH))
     push!(LOAD_PATH, pwd())
 end
-if ~any(occursin.(pwd() * "/autodiff", LOAD_PATH))
-    push!(LOAD_PATH, pwd() * "/autodiff")
+if ~any(occursin.(pwd() * "/autodiff/new", LOAD_PATH))
+    push!(LOAD_PATH, pwd() * "/autodiff/new")
 end
 
 # clear console
@@ -24,9 +24,9 @@ Lx = 1;
 Ly = 1;
 unitCellLayout = [1 1 ; 1 1];
 
-Lx = 2;
-Ly = 1;
-unitCellLayout = [1 2 ; 2 1];
+# Lx = 2;
+# Ly = 1;
+# unitCellLayout = [1 2 ; 2 1];
 
 # Lx = 2;
 # Ly = 2;
@@ -39,8 +39,8 @@ d = 2;
 initMethod = 0;
 convTol = 1e-8;
 maxIter = 100;
-chiE = 8;
-truncBelowE = 1e-8;
+chiE = 16;
+truncBelowE = 1e-16;
 
 # initialize iPEPS tensors
 pepsTensors = Array{Array{Float64, 5}, 2}(undef, Lx, Ly);
@@ -54,7 +54,8 @@ end
 # pepsTensors[2, 2] = randn(8 ,7, d, 9, 6);
 
 energyTBG = isingTBG(0., 0., id = 1.0)
-# energyTBG = heisenbergTBG(1.0, 1.0, 1.0, 0.0);
+# energyTBG = heisenbergTBG(0.0, 0.0, 0.0, 0.0, id=1.0);
+# energyTBG = heisenbergTBG(1.0, 1.0, 1.0, 0.0, id=0.0);
 # energyTBG = ein"aecf, be, fd -> abcd"(energyTBG, σ₁, σ₁');
 
 # pepsTensors = rand(Float64, Lx, Ly, chiB, chiB, d, chiB, chiB);
