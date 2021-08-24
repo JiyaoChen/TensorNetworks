@@ -20,10 +20,6 @@ function absorptionStep_L(C1, T1, C2, T2, C3, T3, C4, T4, pepsTensors, unitCellL
 
         for ucLx = 1 : unitCellLx
 
-            # allProjectors = [computeIsometries_LR(C1, T1, C2, T2, C3, T3, C4, T4, pepsTensors, unitCellLayout, chiE, truncBelowE, (ucLx, ucLy), 'L') for ucLx = 1 : unitCellLx];
-            # projsUL = [proj[1] for proj in allProjectors];
-            # projsDL = [proj[2] for proj in allProjectors];
-
             nC4, nT4, nC1 = absorption_L(oC1, T1, T3, oC4, oT4, pepsTensors, unitCellLayout, projsUL, projsDL, (ucLx, ucLy));
 
             C4[getCoordinates(ucLx + 0, Lx, ucLy + 1, Ly, unitCellLayout)...] = nC4;
@@ -137,7 +133,7 @@ function absorption_U(T4, C1, T1, C2, T2, pepsTensors, unitCellLayout, projsUL, 
 
     # get size
     Lx, Ly = size(pepsTensors);
-    unitCellLx, unitCellLy = size(pepsTensors);
+    unitCellLx, unitCellLy = size(unitCellLayout);
     
     nC1 = ein"(afec, cd), defb -> ab"(T4[getCoordinates(x + 0, Lx, y + 0, Ly, unitCellLayout)...], C1[getCoordinates(x + 0, Lx, y + 0, Ly, unitCellLayout)...], projsUR[periodicIndex(y - 1, unitCellLy)]);
     nT1 = ein"(afjg, (fleh, gcmie), hkid), jbmkl -> abcd"(projsUL[periodicIndex(y - 1, unitCellLy)], T1[getCoordinates(x + 0, Lx, y + 0, Ly, unitCellLayout)...], conj(pepsTensors[getCoordinates(x + 0, Lx, y + 0, Ly, unitCellLayout)...]), projsUR[periodicIndex(y + 0, unitCellLy)], pepsTensors[getCoordinates(x + 0, Lx, y + 0, Ly, unitCellLayout)...]);
@@ -173,7 +169,7 @@ function absorption_D(T2, C3, T3, C4, T4, pepsTensors, unitCellLayout, projsDL, 
 
     # get size
     Lx, Ly = size(pepsTensors);
-    unitCellLx, unitCellLy = size(pepsTensors);
+    unitCellLx, unitCellLy = size(unitCellLayout);
     
     nC3 = ein"defa, (fecb, dc) -> ab"(projsDL[periodicIndex(y + 0, unitCellLy)], T2[getCoordinates(x + 0, Lx, y + 0, Ly, unitCellLayout)...], C3[getCoordinates(x + 0, Lx, y + 0, Ly, unitCellLayout)...]);
     nT3 = ein"(fgja, (fhek, gemic), bhil), jkmld -> abcd"(projsDL[periodicIndex(y - 1, unitCellLy)], T3[getCoordinates(x + 0, Lx, y + 0, Ly, unitCellLayout)...], conj(pepsTensors[getCoordinates(x + 0, Lx, y + 0, Ly, unitCellLayout)...]), projsDR[periodicIndex(y + 0, unitCellLy)], pepsTensors[getCoordinates(x + 0, Lx, y + 0, Ly, unitCellLayout)...]);
