@@ -12,8 +12,9 @@ function computeIsometries_LR(C1, T1, C2, T2, C3, T3, C4, T4, pepsTensors, unitC
     VU = VU';
 
     # truncate singular values
-    # newChi = sum(SU .> truncBelowE);
-    newChi = min(chiE, length(SU));
+    # caution, only truncate small singular values < ϵ (if at all), taking only min(chiE, length(SU)) singular values is too inaccurate to compute good projectors!
+    newChi = sum(SU .> truncBelowE);
+    # newChi = min(chiE, length(SU));
     UU = UU[:, 1 : newChi];
     SU = SU[1 : newChi];
     VU = VU[1 : newChi, :];
@@ -34,8 +35,9 @@ function computeIsometries_LR(C1, T1, C2, T2, C3, T3, C4, T4, pepsTensors, unitC
     VD = VD';
 
     # truncate singular values
-    # newChi = sum(SD .> truncBelowE);
-    newChi = min(chiE, length(SD));
+    # caution, only truncate small singular values < ϵ (if at all), taking only min(chiE, length(SD)) singular values is too inaccurate to compute good projectors!
+    newChi = sum(SD .> truncBelowE);
+    # newChi = min(chiE, length(SD));
     UD = UD[:, 1 : newChi];
     SD = SD[1 : newChi];
     VD = VD[1 : newChi, :];
@@ -114,8 +116,9 @@ function computeIsometries_UD(C1, T1, C2, T2, C3, T3, C4, T4, pepsTensors, unitC
     VL = VL';
 
     # truncate singular values
-    # newChi = sum(SL .> truncBelowE);
-    newChi = min(chiE, length(SL));
+    # caution, only truncate small singular values < ϵ (if at all), taking only min(chiE, length(SL)) singular values is too inaccurate to compute good projectors!
+    newChi = sum(SL .> truncBelowE);
+    # newChi = min(chiE, length(SL));
     UL = UL[:, 1 : newChi];
     SL = SL[1 : newChi];
     VL = VL[1 : newChi, :];
@@ -135,8 +138,9 @@ function computeIsometries_UD(C1, T1, C2, T2, C3, T3, C4, T4, pepsTensors, unitC
     VR = VR';
 
     # truncate singular values
-    # newChi = sum(SR .> truncBelowE);
-    newChi = min(chiE, length(SR));
+    # caution, only truncate small singular values < ϵ (if at all), taking only min(chiE, length(SR)) singular values is too inaccurate to compute good projectors!
+    newChi = sum(SR .> truncBelowE);
+    # newChi = min(chiE, length(SR));
     UR = UR[:, 1 : newChi];
     SR = SR[1 : newChi];
     VR = VR[1 : newChi, :];

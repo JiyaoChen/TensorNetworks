@@ -30,9 +30,9 @@ unitCellLayout = [1 2 ; 2 1];
 
 # Lx = 2;
 # Ly = 2;
-# unitCellLayout = [1 3 ; 2 4];
+# unitCellLayout = reshape(collect(1 : Lx * Ly), Lx, Ly);
 
-chiB = 2;
+chiB = 3;
 d = 2;
 
 # CTMRG settings
@@ -40,7 +40,7 @@ initMethod = 0;
 convTol = 1e-8;
 maxIter = 100;
 chiE = 11;
-truncBelowE = 1e-16;
+truncBelowE = 1e-8;
 
 # initialize iPEPS tensors
 pepsTensors = Array{Array{Float64, 5}, 2}(undef, Lx, Ly);
@@ -49,11 +49,11 @@ for idx = 1 : Lx, idy = 1 : Ly
     pepsTensors[idx, idy] = randn(chiB, chiB, d, chiB, chiB);
 end
 
-# Lx = 2, Ly = 1 different chiB
-pepsTensors[1, 1] = randn(2, 3, d, 4, 5);
-pepsTensors[2, 1] = randn(4, 5, d, 2, 3);
+# # Lx = 2, Ly = 1 different chiB
+# pepsTensors[1, 1] = randn(2, 3, d, 4, 5);
+# pepsTensors[2, 1] = randn(4, 5, d, 2, 3);
 
-# Lx = 2, Ly = 2 different chiB
+# # Lx = 2, Ly = 2 different chiB
 # pepsTensors[1, 1] = randn(2, 3, d, 4, 5);
 # pepsTensors[2, 1] = randn(9, 5, d, 8, 3);
 # pepsTensors[1, 2] = randn(4, 6, d, 2, 7);

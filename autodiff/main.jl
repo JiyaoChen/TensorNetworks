@@ -19,10 +19,10 @@ using Profile
 # include required functions
 include("models.jl")
 
-# iPEPS settings
-Lx = 1;
-Ly = 1;
-unitCellLayout = [1 1 ; 1 1];
+# # iPEPS settings
+# Lx = 1;
+# Ly = 1;
+# unitCellLayout = [1 1 ; 1 1];
 
 Lx = 2;
 Ly = 1;
@@ -32,15 +32,15 @@ unitCellLayout = [1 2 ; 2 1];
 # Ly = 2;
 # unitCellLayout = [1 3 ; 2 4];
 
-chiB = 2;
+chiB = 3;
 d = 2;
 
 # CTMRG settings
 initMethod = 0;
 convTol = 1e-8;
 maxIter = 100;
-chiE = 8;
-truncBelowE = 1e-8;
+chiE = 12;
+truncBelowE = 1e-16;
 
 # initialize iPEPS tensors
 pepsTensors = Array{Array{Float64, 5}, 2}(undef, Lx, Ly);

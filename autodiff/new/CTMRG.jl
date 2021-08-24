@@ -21,7 +21,7 @@ function runCTMRG(pepsTensors, unitCellLayout, chiE, truncBelowE, convTol, maxIt
     stopFunc = StopFunction(Lx, Ly, sinVals, 0, convTol, maxIter, chiE);
 
     # make CTMRG step and return CRMTG tensors
-    # CTMRGTensors = CTMRGStep((CTMRGTensors..., sinVals), (pepsTensors, chiE, truncBelowE, d));
+    # CTMRGTensors = CTMRGStep(CTMRGTensors, (pepsTensors, unitCellLayout, chiE, truncBelowE))
 
     # run fixedPoint CTMRG routine and return CTMRGTensors
     CTMRGTensors = fixedPoint(CTMRGStep, CTMRGTensors, (pepsTensors, unitCellLayout, chiE, truncBelowE), stopFunc);
@@ -30,15 +30,22 @@ function runCTMRG(pepsTensors, unitCellLayout, chiE, truncBelowE, convTol, maxIt
 
 end
 
-# function CTMRGStep((C1, T1, C2, T2, C3, T3, C4, T4, sinVals), (pepsTensors, chiE, truncBelowE))
 function CTMRGStep(CTMRGTensors, (pepsTensors, unitCellLayout, chiE, truncBelowE))
 
     # absorb uni-directional
     C1, T1, C2, T2, C3, T3, C4, T4 = CTMRGTensors;
-    C4, T4, C1 = absorptionStep_L(C1, T1, C2, T2, C3, T3, C4, T4, pepsTensors, unitCellLayout, chiE, truncBelowE);
-    C1, T1, C2 = absorptionStep_U(C1, T1, C2, T2, C3, T3, C4, T4, pepsTensors, unitCellLayout, chiE, truncBelowE);
-    C2, T2, C3 = absorptionStep_R(C1, T1, C2, T2, C3, T3, C4, T4, pepsTensors, unitCellLayout, chiE, truncBelowE);
-    C3, T3, C4 = absorptionStep_D(C1, T1, C2, T2, C3, T3, C4, T4, pepsTensors, unitCellLayout, chiE, truncBelowE);
+
+    # # regular, array-mutating CTMRG
+    # C4, T4, C1 = absorptionStep_L(C1, T1, C2, T2, C3, T3, C4, T4, pepsTensors, unitCellLayout, chiE, truncBelowE);
+    # C1, T1, C2 = absorptionStep_U(C1, T1, C2, T2, C3, T3, C4, T4, pepsTensors, unitCellLayout, chiE, truncBelowE);
+    # C2, T2, C3 = absorptionStep_R(C1, T1, C2, T2, C3, T3, C4, T4, pepsTensors, unitCellLayout, chiE, truncBelowE);
+    # C3, T3, C4 = absorptionStep_D(C1, T1, C2, T2, C3, T3, C4, T4, pepsTensors, unitCellLayout, chiE, truncBelowE);
+
+    # autodiff, non-mutating CTMRG
+    C4, T4, C1 = absorptionStep_L_nonMutating(C1, T1, C2, T2, C3, T3, C4, T4, pepsTensors, unitCellLayout, chiE, truncBelowE);
+    C1, T1, C2 = absorptionStep_U_nonMutating(C1, T1, C2, T2, C3, T3, C4, T4, pepsTensors, unitCellLayout, chiE, truncBelowE);
+    C2, T2, C3 = absorptionStep_R_nonMutating(C1, T1, C2, T2, C3, T3, C4, T4, pepsTensors, unitCellLayout, chiE, truncBelowE);
+    C3, T3, C4 = absorptionStep_D_nonMutating(C1, T1, C2, T2, C3, T3, C4, T4, pepsTensors, unitCellLayout, chiE, truncBelowE);
 
     return (C1, T1, C2, T2, C3, T3, C4, T4)
 

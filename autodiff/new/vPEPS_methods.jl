@@ -83,7 +83,6 @@ end
 # end
 
 # initializers
-# @Zygote.nograd initializeC
 function initializeC(elementType::DataType, tensorDims::NTuple{5, Int64}, chiE::Int, initMethod::Int)
     if initMethod == 0
         c = ones(elementType, 1, 1);
@@ -93,7 +92,6 @@ function initializeC(elementType::DataType, tensorDims::NTuple{5, Int64}, chiE::
     return c
 end
 
-# @Zygote.nograd initializeT1
 function initializeT1(elementType::DataType, tensorDims::NTuple{5, Int64}, chiE::Int, initMethod::Int)
     if initMethod == 0
         T1 = ones(elementType, 1, tensorDims[5], tensorDims[5], 1);
@@ -103,7 +101,6 @@ function initializeT1(elementType::DataType, tensorDims::NTuple{5, Int64}, chiE:
     return T1
 end
 
-# @Zygote.nograd initializeT2
 function initializeT2(elementType::DataType, tensorDims::NTuple{5, Int64}, chiE::Int, initMethod::Int)
     if initMethod == 0
         T2 = ones(elementType, tensorDims[4], tensorDims[4], 1, 1);
@@ -113,7 +110,6 @@ function initializeT2(elementType::DataType, tensorDims::NTuple{5, Int64}, chiE:
     return T2
 end
 
-# @Zygote.nograd initializeT3
 function initializeT3(elementType::DataType, tensorDims::NTuple{5, Int64}, chiE::Int, initMethod::Int)
     if initMethod == 0
         T3 = ones(elementType, 1, 1, tensorDims[2], tensorDims[2]);
@@ -123,7 +119,6 @@ function initializeT3(elementType::DataType, tensorDims::NTuple{5, Int64}, chiE:
     return T3
 end
 
-# @Zygote.nograd initializeT4
 function initializeT4(elementType::DataType, tensorDims::NTuple{5, Int64}, chiE::Int, initMethod::Int)
     if initMethod == 0
         T4 = ones(elementType, 1, tensorDims[1], tensorDims[1], 1);
