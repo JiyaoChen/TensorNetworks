@@ -12,13 +12,19 @@ function absorptionStep_L(C1, T1, C2, T2, C3, T3, C4, T4, pepsTensors, unitCellL
     # loop over all tensors in y-direction
     for ucLy = 1 : +1 : unitCellLy
 
+        allProjectors = [computeIsometries_LR(C1, T1, C2, T2, C3, T3, C4, T4, pepsTensors, unitCellLayout, chiE, truncBelowE, (ucLx, ucLy), 'L') for ucLx = 1 : unitCellLx];
+        projsUL = [proj[1] for proj in allProjectors];
+        projsDL = [proj[2] for proj in allProjectors];
+
+        oC4, oT4, oC1 = deepcopy.((C4, T4, C1));
+
         for ucLx = 1 : unitCellLx
 
-            allProjectors = [computeIsometries_LR(C1, T1, C2, T2, C3, T3, C4, T4, pepsTensors, unitCellLayout, chiE, truncBelowE, (ucLx, ucLy), 'L') for ucLx = 1 : unitCellLx];
-            projsUL = [proj[1] for proj in allProjectors];
-            projsDL = [proj[2] for proj in allProjectors];
+            # allProjectors = [computeIsometries_LR(C1, T1, C2, T2, C3, T3, C4, T4, pepsTensors, unitCellLayout, chiE, truncBelowE, (ucLx, ucLy), 'L') for ucLx = 1 : unitCellLx];
+            # projsUL = [proj[1] for proj in allProjectors];
+            # projsDL = [proj[2] for proj in allProjectors];
 
-            nC4, nT4, nC1 = absorption_L(C1, T1, T3, C4, T4, pepsTensors, unitCellLayout, projsUL, projsDL, (ucLx, ucLy));
+            nC4, nT4, nC1 = absorption_L(oC1, T1, T3, oC4, oT4, pepsTensors, unitCellLayout, projsUL, projsDL, (ucLx, ucLy));
 
             C4[getCoordinates(ucLx + 0, Lx, ucLy + 1, Ly, unitCellLayout)...] = nC4;
             T4[getCoordinates(ucLx + 0, Lx, ucLy + 1, Ly, unitCellLayout)...] = nT4;
@@ -41,13 +47,15 @@ function absorptionStep_U(C1, T1, C2, T2, C3, T3, C4, T4, pepsTensors, unitCellL
     # loop over all tensors in x-direction
     for ucLx = 1 : +1 : unitCellLx
 
+        allProjectors = [computeIsometries_UD(C1, T1, C2, T2, C3, T3, C4, T4, pepsTensors, unitCellLayout, chiE, truncBelowE, (ucLx, ucLy), 'U') for ucLy = 1 : unitCellLy];
+        projsUL = [proj[1] for proj in allProjectors];
+        projsUR = [proj[2] for proj in allProjectors];
+
+        oC1, oT1, oC2 = deepcopy.((C1, T1, C2));
+
         for ucLy = 1 : unitCellLy
 
-            allProjectors = [computeIsometries_UD(C1, T1, C2, T2, C3, T3, C4, T4, pepsTensors, unitCellLayout, chiE, truncBelowE, (ucLx, ucLy), 'U') for ucLy = 1 : unitCellLy];
-            projsUL = [proj[1] for proj in allProjectors];
-            projsUR = [proj[2] for proj in allProjectors];
-
-            nC1, nT1, nC2 = absorption_U(T4, C1, T1, C2, T2, pepsTensors, unitCellLayout, projsUL, projsUR, (ucLx, ucLy));
+            nC1, nT1, nC2 = absorption_U(T4, oC1, oT1, oC2, T2, pepsTensors, unitCellLayout, projsUL, projsUR, (ucLx, ucLy));
 
             C1[getCoordinates(ucLx + 1, Lx, ucLy + 0, Ly, unitCellLayout)...] = nC1;
             T1[getCoordinates(ucLx + 1, Lx, ucLy + 0, Ly, unitCellLayout)...] = nT1;
@@ -70,13 +78,15 @@ function absorptionStep_R(C1, T1, C2, T2, C3, T3, C4, T4, pepsTensors, unitCellL
     # loop over all tensor in y-direction
     for ucLy = unitCellLy : -1 : 1
 
+        allProjectors = [computeIsometries_LR(C1, T1, C2, T2, C3, T3, C4, T4, pepsTensors, unitCellLayout, chiE, truncBelowE, (ucLx, ucLy), 'R') for ucLx = 1 : unitCellLx];
+        projsUR = [proj[3] for proj in allProjectors];
+        projsDR = [proj[4] for proj in allProjectors];
+
+        oC2, oT2, oC3 = deepcopy.((C2, T2, C3));
+
         for ucLx = 1 : unitCellLx
 
-            allProjectors = [computeIsometries_LR(C1, T1, C2, T2, C3, T3, C4, T4, pepsTensors, unitCellLayout, chiE, truncBelowE, (ucLx, ucLy), 'R') for ucLx = 1 : unitCellLx];
-            projsUR = [proj[3] for proj in allProjectors];
-            projsDR = [proj[4] for proj in allProjectors];
-
-            nC2, nT2, nC3 = absorption_R(T1, C2, T2, C3, T3, pepsTensors, unitCellLayout, projsUR, projsDR, (ucLx, ucLy));
+            nC2, nT2, nC3 = absorption_R(T1, oC2, oT2, oC3, T3, pepsTensors, unitCellLayout, projsUR, projsDR, (ucLx, ucLy));
 
             C2[getCoordinates(ucLx + 0, Lx, ucLy - 1, Ly, unitCellLayout)...] = nC2;
             T2[getCoordinates(ucLx + 0, Lx, ucLy - 1, Ly, unitCellLayout)...] = nT2;
@@ -99,14 +109,16 @@ function absorptionStep_D(C1, T1, C2, T2, C3, T3, C4, T4, pepsTensors, unitCellL
     # loop over all tensor in x-direction
     for ucLx = unitCellLx : -1 : 1
 
+        allProjectors = [computeIsometries_UD(C1, T1, C2, T2, C3, T3, C4, T4, pepsTensors, unitCellLayout, chiE, truncBelowE, (ucLx, ucLy), 'D') for ucLy = 1 : unitCellLy];
+        projsDL = [proj[3] for proj in allProjectors];
+        projsDR = [proj[4] for proj in allProjectors];
+
+        oC3, oT3, oC4 = deepcopy.((C3, T3, C4));
+
         for ucLy = 1 : unitCellLy
 
-            allProjectors = [computeIsometries_UD(C1, T1, C2, T2, C3, T3, C4, T4, pepsTensors, unitCellLayout, chiE, truncBelowE, (ucLx, ucLy), 'D') for ucLy = 1 : unitCellLy];
-            projsDL = [proj[3] for proj in allProjectors];
-            projsDR = [proj[4] for proj in allProjectors];
-
             # make absorption of one row
-            nC3, nT3, nC4 = absorption_D(T2, C3, T3, C4, T4, pepsTensors, unitCellLayout, projsDL, projsDR, (ucLx, ucLy));
+            nC3, nT3, nC4 = absorption_D(T2, oC3, oT3, oC4, T4, pepsTensors, unitCellLayout, projsDL, projsDR, (ucLx, ucLy));
 
             # set updated tensors (please)
             C3[getCoordinates(ucLx - 1, Lx, ucLy + 0, Ly, unitCellLayout)...] = nC3;

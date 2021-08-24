@@ -35,10 +35,10 @@ function CTMRGStep(CTMRGTensors, (pepsTensors, unitCellLayout, chiE, truncBelowE
 
     # absorb uni-directional
     C1, T1, C2, T2, C3, T3, C4, T4 = CTMRGTensors;
-    C1, T1, C2 = absorptionStep_U(C1, T1, C2, T2, C3, T3, C4, T4, pepsTensors, unitCellLayout, chiE, truncBelowE);
     C4, T4, C1 = absorptionStep_L(C1, T1, C2, T2, C3, T3, C4, T4, pepsTensors, unitCellLayout, chiE, truncBelowE);
-    # C3, T3, C4 = absorptionStep_D(C1, T1, C2, T2, C3, T3, C4, T4, pepsTensors, unitCellLayout, chiE, truncBelowE);
-    # C2, T2, C3 = absorptionStep_R(C1, T1, C2, T2, C3, T3, C4, T4, pepsTensors, unitCellLayout, chiE, truncBelowE);
+    C1, T1, C2 = absorptionStep_U(C1, T1, C2, T2, C3, T3, C4, T4, pepsTensors, unitCellLayout, chiE, truncBelowE);
+    C2, T2, C3 = absorptionStep_R(C1, T1, C2, T2, C3, T3, C4, T4, pepsTensors, unitCellLayout, chiE, truncBelowE);
+    C3, T3, C4 = absorptionStep_D(C1, T1, C2, T2, C3, T3, C4, T4, pepsTensors, unitCellLayout, chiE, truncBelowE);
 
     return (C1, T1, C2, T2, C3, T3, C4, T4)
 
