@@ -1,29 +1,30 @@
-function optimizePEPS(pepsTensors, unitCellLayout, chiE, truncBelowE, convTol, maxIter, initMethod, energyTBG)
+function optimizePEPS(pepsTensorsVec, unitCellLayout, chiE, truncBelowE, convTolE, maxIter, initMethod, energyTBG)
    
-    optimmethod = LBFGS(m = 20);
+    optimmethod = LBFGS(m = 10);
     optimargs = (Optim.Options(f_tol = 1e-6, show_trace = true), );
-    res = nothing
-    let energy = x -> real(computeEnergy(x, unitCellLayout, chiE, truncBelowE, convTol, maxIter, initMethod, energyTBG))
-        res = optimize(energy, Δ -> Zygote.gradient(energy, Δ)[1], pepsTensors, optimmethod, inplace = false, optimargs...);
+    res = nothing;
+    let groundStateEnergy = x -> real(computeEnergy(x, unitCellLayout, chiE, truncBelowE, convTolE, maxIter, initMethod, energyTBG))
+        res = optimize(groundStateEnergy, Δ -> Zygote.gradient(groundStateEnergy, Δ)[1], pepsTensorsVec, optimmethod, inplace = false, optimargs...);
     end
 
     return res;
 
 end
 
-function computeEnergy(pepsTensorsVec, unitCellLayout, chiE, truncBelowE, convTol, maxIter, initMethod, energyTBG)
+function computeEnergy(pepsTensorsVec, unitCellLayout, chiE, truncBelowE, convTolE, maxIter, initMethod, energyTBG)
 
-    # # reshape pepsTensor into array of iPEPS tensors
-    # Lx = size(pepsTensorsVec, 1);
-    # Ly = size(pepsTensorsVec, 2);
-    # pepsTensors = [pepsTensorsVec[idx, idy, :, :, :, :, :] for idx = 1 : Lx, idy = 1 : Ly];
-    pepsTensors = pepsTensorsVec;
+    # reshape pepsTensor into array of iPEPS tensors
+    Lx = size(pepsTensorsVec, 1);
+    Ly = size(pepsTensorsVec, 2);
+    pepsTensors = [pepsTensorsVec[idx, idy, :, :, :, :, :] for idx = 1 : Lx, idy = 1 : Ly];
+    # pepsTensors = pepsTensorsVec;
 
     # run CTMRG
-    CTMRGTensors = runCTMRG(pepsTensors, unitCellLayout, chiE, truncBelowE, convTol, maxIter, initMethod);
+    CTMRGTensors = runCTMRG(pepsTensors, unitCellLayout, chiE, truncBelowE, convTolE, maxIter, initMethod);
 
     # compute energy
-    return energy(pepsTensors, unitCellLayout, CTMRGTensors, energyTBG)
+    gsE = energy(pepsTensors, unitCellLayout, CTMRGTensors, energyTBG);
+    return gsE
 
 end
 
@@ -55,7 +56,6 @@ end
 function toTensorNum(lx, Lx, ly, Ly)
 
     tensorNumbering = reshape(collect(1 : Lx * Ly), Lx, Ly);
-
     return tensorNumbering[lx, ly]
 
 end
@@ -129,7 +129,7 @@ function initializeT4(elementType::DataType, tensorDims::NTuple{5, Int64}, chiE:
 end
 
 # @Zygote.nograd initializeTensors
-function initializeTensors(initFunc, elementType, dimensionsTensors, chiE, initMethod::Int, T, Lx, Ly, unitCellLayout)
+function initializeTensors(initFunc, elementType, dimensionsTensors, chiE::Int, initMethod::Int, T, Lx::Int, Ly::Int)
     
     # initialize array with CTM tensors
     tensorArray = Array{T, 2}([initFunc(elementType, dimensionsTensors[idx, idy], chiE, initMethod) for idx = 1 : Lx, idy = 1 : Ly]);
@@ -138,8 +138,8 @@ function initializeTensors(initFunc, elementType, dimensionsTensors, chiE, initM
 end
 
 # @Zygote.nograd initializeCTMRGTensors
-function initializeCTMRGTensors(elementType, dimensionsTensors, unitCellLayout, chiE::Int; initMethod = 0)
-    
+function initializeCTMRGTensors(elementType, dimensionsTensors, unitCellLayout, chiE::Int; initMethod::Int = 0)
+
     # get size
     Lx, Ly = size(dimensionsTensors);
 
@@ -147,17 +147,17 @@ function initializeCTMRGTensors(elementType, dimensionsTensors, unitCellLayout, 
     typeC = Array{elementType, 2};
     typeT = Array{elementType, 4};
 
-    C1 = initializeTensors(initializeC, elementType, dimensionsTensors, chiE, initMethod, typeC, Lx, Ly, unitCellLayout);
-    T1 = initializeTensors(initializeT1, elementType, dimensionsTensors, chiE, initMethod, typeT, Lx, Ly, unitCellLayout);
+    C1 = initializeTensors(initializeC, elementType, dimensionsTensors, chiE, initMethod, typeC, Lx, Ly);
+    T1 = initializeTensors(initializeT1, elementType, dimensionsTensors, chiE, initMethod, typeT, Lx, Ly);
 
-    C2 = initializeTensors(initializeC, elementType, dimensionsTensors, chiE, initMethod, typeC, Lx, Ly, unitCellLayout);
-    T2 = initializeTensors(initializeT2, elementType, dimensionsTensors, chiE, initMethod, typeT, Lx, Ly, unitCellLayout);
+    C2 = initializeTensors(initializeC, elementType, dimensionsTensors, chiE, initMethod, typeC, Lx, Ly);
+    T2 = initializeTensors(initializeT2, elementType, dimensionsTensors, chiE, initMethod, typeT, Lx, Ly);
 
-    C3 = initializeTensors(initializeC, elementType, dimensionsTensors, chiE, initMethod, typeC, Lx, Ly, unitCellLayout);
-    T3 = initializeTensors(initializeT3, elementType, dimensionsTensors, chiE, initMethod, typeT, Lx, Ly, unitCellLayout);
+    C3 = initializeTensors(initializeC, elementType, dimensionsTensors, chiE, initMethod, typeC, Lx, Ly);
+    T3 = initializeTensors(initializeT3, elementType, dimensionsTensors, chiE, initMethod, typeT, Lx, Ly);
 
-    C4 = initializeTensors(initializeC, elementType, dimensionsTensors, chiE, initMethod, typeC, Lx, Ly, unitCellLayout);
-    T4 = initializeTensors(initializeT4, elementType, dimensionsTensors, chiE, initMethod, typeT, Lx, Ly, unitCellLayout);
+    C4 = initializeTensors(initializeC, elementType, dimensionsTensors, chiE, initMethod, typeC, Lx, Ly);
+    T4 = initializeTensors(initializeT4, elementType, dimensionsTensors, chiE, initMethod, typeT, Lx, Ly);
 
     # return CTMRG tensors
     return C1, T1, C2, T2, C3, T3, C4, T4

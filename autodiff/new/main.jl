@@ -20,35 +20,36 @@ using Profile
 include("models.jl")
 
 # iPEPS settings
-Lx = 1;
-Ly = 1;
-unitCellLayout = [1 1 ; 1 1];
 
-Lx = 1;
-Ly = 2;
+# Lx = 1;
+# Ly = 1;
+# unitCellLayout = [1 1 ; 1 1];
+
+Lx = 2;
+Ly = 1;
 unitCellLayout = [1 2 ; 2 1];
 # unitCellLayout = reshape(collect(1 : Lx * Ly), Lx, Ly)
 
-Lx = 2;
-Ly = 2;
-unitCellLayout = reshape(collect(1 : Lx * Ly), Lx, Ly);
+# Lx = 2;
+# Ly = 2;
+# unitCellLayout = reshape(collect(1 : Lx * Ly), Lx, Ly);
 
-chiB = 3;
+chiB = 2;
 d = 2;
 
 # CTMRG settings
 initMethod = 0;
-convTol = 1e-8;
+convTolE = 1e-8;
 maxIter = 100;
-chiE = 11;
+chiE = 8;
 truncBelowE = 1e-8;
 
-# initialize iPEPS tensors
-pepsTensors = Array{Array{Float64, 5}, 2}(undef, Lx, Ly);
-A = randn(chiB, chiB, d, chiB, chiB);
-for idx = 1 : Lx, idy = 1 : Ly
-    pepsTensors[idx, idy] = randn(chiB, chiB, d, chiB, chiB);
-end
+# # initialize iPEPS tensors
+# pepsTensors = Array{Array{Float64, 5}, 2}(undef, Lx, Ly);
+# A = randn(chiB, chiB, d, chiB, chiB);
+# for idx = 1 : Lx, idy = 1 : Ly
+#     pepsTensors[idx, idy] = randn(chiB, chiB, d, chiB, chiB);
+# end
 
 # # Lx = 1, Ly = 2 different chiB
 # if Lx == 1 && Ly == 2
@@ -81,50 +82,38 @@ end
 # end
 
 # construct two-body gate to compute energy
-energyTBG = isingTBG(0., 0., id = 1.0)
+# energyTBG = isingTBG(1.0, 0.0, id = 0.0)
 # energyTBG = heisenbergTBG(0.0, 0.0, 0.0, 0.0, id=1.0);
-# energyTBG = heisenbergTBG(1.0, 1.0, 1.0, 0.0, id=0.0);
+energyTBG = heisenbergTBG(1.0, 1.0, 1.0, 0.0, id = 0.0);
 # energyTBG = ein"aecf, be, fd -> abcd"(energyTBG, σ₁, σ₁');
 
-# # initialize pepsTesorsVec
-# pepsTensorsVec = rand(Float64, Lx, Ly, chiB, chiB, d, chiB, chiB);
+initializePEPS = 1; # 0 => randn, 1 => simple update
+if initializePEPS == 0
 
-# # reshape pepsTensor into array of iPEPS tensors
-# Lx = size(pepsTensorsVec, 1);
-# Ly = size(pepsTensorsVec, 2);
-# pepsTensors = [pepsTensorsVec[idx, idy, :, :, :, :, :] for idx = 1 : Lx, idy = 1 : Ly];
+    # initialize pepsTesorsVec
+    pepsTensorsVec = randn(Float64, Lx, Ly, chiB, chiB, d, chiB, chiB);
 
-# using LinearAlgebra
-# using OMEinsum
-# using Printf
-# using Zygote
-# # include("customAdjoints.jl")
-# include("CTMRG.jl")
-# # include("vPEPS.jl")
-# include("vPEPS_methods.jl")
+elseif initializePEPS == 1
 
-# # get size
-# Lx, Ly = size(pepsTensors);
+    # run simple update
+    convTolB = 1e-6;
+    gammaTensors, lambdaTensors, singularValueTensor = simpleUpdate_iPEPS(Lx, Ly, d, chiB, convTolB, energyTBG; verbosePrint = false);
 
-# # get element type and dimensions of pepsTensors
-# elementType = eltype(eltype(pepsTensors));
-# dimensionsTensors = [size(pepsTensors[idx, idy]) for idx = 1 : Lx, idy = 1 : Ly];
+    # convert gammaTensors into pepsTensorsVec
+    pepsTensorsVec = zeros(Float64, Lx, Ly, chiB, chiB, d, chiB, chiB);
+    for idx = 1 : Lx, idy = 1 : Ly
+        pepsTensorsVec[idx, idy, :, :, :, :, :] = gammaTensors[idx, idy];
+    end
 
-# # initialize structs for CTMRG tensors
-# CTMRGTensors = initializeCTMRGTensors(elementType, dimensionsTensors, unitCellLayout, chiE, initMethod = initMethod);
+end
 
-# _, back = Zygote.pullback(CTMRGStep, CTMRGTensors, (pepsTensors, unitCellLayout, chiE, truncBelowE));
-# 0;
-
-computeEnergy(pepsTensors, unitCellLayout, chiE, truncBelowE, convTol, maxIter, initMethod, energyTBG)
-# minPEPS = optimizePEPS(pepsTensors, unitCellLayout, chiE, truncBelowE, convTol, maxIter, initMethod, energyTBG)
+# computeEnergy(pepsTensorsVec, unitCellLayout, chiE, truncBelowE, convTolE, maxIter, initMethod, energyTBG)
+minPEPS = optimizePEPS(pepsTensorsVec, unitCellLayout, chiE, truncBelowE, convTolE, maxIter, initMethod, energyTBG)
 
 # final objective value
-# Lx = 1, Ly = 1
-# (2, 4) => -6.602310e-01 / -6.592901e-01
-# (2, 8) => 
+# Lx = 1, Ly = 1 | array columns: chiB, chiE, gsE
+energyConv = [2 4 -6.602311e-01];
 
-# Lx = 2, Ly = 2 - (chiB, chiE)
-# (2, 4) => -6.624950e-01 
-# @profview computeEnergy(pepsTensors, unitCellLayout, chiE, truncBelowE, convTol, maxIter, initMethod, energyTBG) # Heisenberg model: −0.6694421(4) [arXiv:1101.3281]
-# @time computeEnergy(pepsTensors, unitCellLayout, chiE, truncBelowE, convTol, maxIter, initMethod, energyTBG) # for the Heisenberg model: −0.6694421(4) [arXiv:1101.3281]
+# final objective value
+# Lx = 1, Ly = 1 | array columns: chiB, chiE, gsE
+energyConv = [2 4 ];

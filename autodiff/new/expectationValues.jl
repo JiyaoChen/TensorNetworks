@@ -5,7 +5,6 @@ function energy(pepsTensors, unitCellLayout, CTMRGTensors, tbg)
     expValsH = [twoSiteExpVal_H(pepsTensors, unitCellLayout, CTMRGTensors, tbg, (idx, idy)) for idx = 1 : Lx, idy = 1 : Ly];
     expValsV = [twoSiteExpVal_V(pepsTensors, unitCellLayout, CTMRGTensors, tbg, (idx, idy)) for idx = 1 : Lx, idy = 1 : Ly];
     energy = 1 / (2 * Lx * Ly) * (sum(expValsH) + sum(expValsV));
-    
     return energy
     
 end

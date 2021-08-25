@@ -11,13 +11,13 @@ function computeIsometries_LR(C1, T1, C2, T2, C3, T3, C4, T4, pepsTensors, unitC
     # SU = diagm(SU);
     VU = VU';
 
-    # truncate singular values
-    # caution, only truncate small singular values < ϵ (if at all), taking only min(chiE, length(SU)) singular values is too inaccurate to compute good projectors!
-    newChi = sum(SU .> truncBelowE);
-    # newChi = min(chiE, length(SU));
-    UU = UU[:, 1 : newChi];
-    SU = SU[1 : newChi];
-    VU = VU[1 : newChi, :];
+    # # truncate singular values
+    # # caution, only truncate small singular values < ϵ (if at all), taking only min(chiE, length(SU)) singular values is too inaccurate to compute good projectors!
+    # newChi = sum(SU .> truncBelowE);
+    # # newChi = min(chiE, length(SU));
+    # UU = UU[:, 1 : newChi];
+    # SU = SU[1 : newChi];
+    # VU = VU[1 : newChi, :];
 
     # absorb sqrt(SU) into UU and VU
     sqrtSU = diagm(sqrt.(SU));
@@ -34,13 +34,13 @@ function computeIsometries_LR(C1, T1, C2, T2, C3, T3, C4, T4, pepsTensors, unitC
     # SD = diagm(SD);
     VD = VD';
 
-    # truncate singular values
-    # caution, only truncate small singular values < ϵ (if at all), taking only min(chiE, length(SD)) singular values is too inaccurate to compute good projectors!
-    newChi = sum(SD .> truncBelowE);
-    # newChi = min(chiE, length(SD));
-    UD = UD[:, 1 : newChi];
-    SD = SD[1 : newChi];
-    VD = VD[1 : newChi, :];
+    # # truncate singular values
+    # # caution, only truncate small singular values < ϵ (if at all), taking only min(chiE, length(SD)) singular values is too inaccurate to compute good projectors!
+    # newChi = sum(SD .> truncBelowE);
+    # # newChi = min(chiE, length(SD));
+    # UD = UD[:, 1 : newChi];
+    # SD = SD[1 : newChi];
+    # VD = VD[1 : newChi, :];
 
     # absorb sqrt(SD) into UD and VD
     sqrtSD = diagm(sqrt.(SD));
@@ -57,8 +57,8 @@ function computeIsometries_LR(C1, T1, C2, T2, C3, T3, C4, T4, pepsTensors, unitC
     VL = VL';
 
     # truncate UL, SL and VL
-    newChi = min(chiE, sum(SL .> truncBelowE));
-    # newChi = min(chiE, length(SL));
+    # newChi = min(chiE, sum(SL .> truncBelowE));
+    newChi = min(chiE, length(SL));
     UL = UL[:, 1 : newChi];
     SL = SL[1 : newChi];
     VL = VL[1 : newChi, :];
@@ -81,8 +81,8 @@ function computeIsometries_LR(C1, T1, C2, T2, C3, T3, C4, T4, pepsTensors, unitC
     VR = VR';
 
     # truncate UR, SR and VR
-    newChi = min(chiE, sum(SR .> truncBelowE));
-    # newChi = min(chiE, length(SR));
+    # newChi = min(chiE, sum(SR .> truncBelowE));
+    newChi = min(chiE, length(SR));
     UR = UR[:, 1 : newChi];
     SR = SR[1 : newChi];
     VR = VR[1 : newChi, :];
@@ -115,13 +115,13 @@ function computeIsometries_UD(C1, T1, C2, T2, C3, T3, C4, T4, pepsTensors, unitC
     # SL = diagm(SL);
     VL = VL';
 
-    # truncate singular values
-    # caution, only truncate small singular values < ϵ (if at all), taking only min(chiE, length(SL)) singular values is too inaccurate to compute good projectors!
-    newChi = sum(SL .> truncBelowE);
-    # newChi = min(chiE, length(SL));
-    UL = UL[:, 1 : newChi];
-    SL = SL[1 : newChi];
-    VL = VL[1 : newChi, :];
+    # # truncate singular values
+    # # caution, only truncate small singular values < ϵ (if at all), taking only min(chiE, length(SL)) singular values is too inaccurate to compute good projectors!
+    # newChi = sum(SL .> truncBelowE);
+    # # newChi = min(chiE, length(SL));
+    # UL = UL[:, 1 : newChi];
+    # SL = SL[1 : newChi];
+    # VL = VL[1 : newChi, :];
 
     # absorb sqrt(SL) into UL and VL
     sqrtSL = diagm(sqrt.(SL))
@@ -137,13 +137,13 @@ function computeIsometries_UD(C1, T1, C2, T2, C3, T3, C4, T4, pepsTensors, unitC
     # SR = diagm(SR);
     VR = VR';
 
-    # truncate singular values
-    # caution, only truncate small singular values < ϵ (if at all), taking only min(chiE, length(SR)) singular values is too inaccurate to compute good projectors!
-    newChi = sum(SR .> truncBelowE);
-    # newChi = min(chiE, length(SR));
-    UR = UR[:, 1 : newChi];
-    SR = SR[1 : newChi];
-    VR = VR[1 : newChi, :];
+    # # truncate singular values
+    # # caution, only truncate small singular values < ϵ (if at all), taking only min(chiE, length(SR)) singular values is too inaccurate to compute good projectors!
+    # newChi = sum(SR .> truncBelowE);
+    # # newChi = min(chiE, length(SR));
+    # UR = UR[:, 1 : newChi];
+    # SR = SR[1 : newChi];
+    # VR = VR[1 : newChi, :];
 
     # absorb sqrt(SR) into UR and VR
     sqrtSR = diagm(sqrt.(SR))
@@ -159,8 +159,8 @@ function computeIsometries_UD(C1, T1, C2, T2, C3, T3, C4, T4, pepsTensors, unitC
     VU = VU';
 
     # truncate UU, SU and VU
-    newChi = min(chiE, sum(SU .> truncBelowE));
-    # newChi = min(chiE, length(SU));
+    # newChi = min(chiE, sum(SU .> truncBelowE));
+    newChi = min(chiE, length(SU));
     UU = UU[:, 1 : newChi];
     SU = SU[1 : newChi];
     VU = VU[1 : newChi, :];
@@ -183,14 +183,12 @@ function computeIsometries_UD(C1, T1, C2, T2, C3, T3, C4, T4, pepsTensors, unitC
     VD = VD';
 
     # truncate UD, SD and VD
-    newChi = min(chiE, sum(SD .> truncBelowE));
-    # newChi = min(chiE, length(SD));
+    # newChi = min(chiE, sum(SD .> truncBelowE));
+    newChi = min(chiE, length(SD));
     UD = UD[:, 1 : newChi];
     SD = SD[1 : newChi];
     VD = VD[1 : newChi, :];
     sqrtSD = diagm(sqrt.(pinv.(SD)));
-
-    # sqrts = sqrt.(pinv.(view(s,1:cutoff)))
 
     # build projectors for right truncation
     PDR = sqrtSD * UD' * FDR;

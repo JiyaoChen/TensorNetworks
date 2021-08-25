@@ -2,7 +2,7 @@ include("absorptions.jl")
 include("computeIsometries.jl")
 include("fixedpoint.jl")
 
-function runCTMRG(pepsTensors, unitCellLayout, chiE, truncBelowE, convTol, maxIter, initMethod = 0)
+function runCTMRG(pepsTensors, unitCellLayout, chiE, truncBelowE, convTolE, maxIter, initMethod = 0)
 
     # get size
     Lx, Ly = size(pepsTensors);
@@ -18,14 +18,14 @@ function runCTMRG(pepsTensors, unitCellLayout, chiE, truncBelowE, convTol, maxIt
     sinVals = fill(fill(Inf, 4 * chiE), Lx, Ly);
 
     # construct struct for stopFunction
-    stopFunc = StopFunction(Lx, Ly, sinVals, 0, convTol, maxIter, chiE);
+    stopFunc = StopFunction(Lx, Ly, sinVals, 0, convTolE, maxIter, chiE);
 
     # make CTMRG step and return CRMTG tensors
     # CTMRGTensors = CTMRGStep(CTMRGTensors, (pepsTensors, unitCellLayout, chiE, truncBelowE))
 
     # run fixedPoint CTMRG routine and return CTMRGTensors
-    CTMRGTensors = fixedPoint(CTMRGStep, CTMRGTensors, (pepsTensors, unitCellLayout, chiE, truncBelowE), stopFunc);
-    # CTMRGTensors = fixedPointAD(CTMRGStep, CTMRGTensors, (pepsTensors, unitCellLayout, chiE, truncBelowE), stopFunc);
+    # CTMRGTensors = fixedPoint(CTMRGStep, CTMRGTensors, (pepsTensors, unitCellLayout, chiE, truncBelowE), stopFunc);
+    CTMRGTensors = fixedPointAD(CTMRGStep, CTMRGTensors, (pepsTensors, unitCellLayout, chiE, truncBelowE), stopFunc);
     return CTMRGTensors
 
 end
