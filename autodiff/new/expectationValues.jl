@@ -48,6 +48,7 @@ function twoSiteExpVal_H(pepsTensors, unitCellLayout, CTMRGTensors, twoSiteOpera
     # expVal_O = dot(TNGateL, TNR);
     # println(expVal_O)
     
+    # println("Energy / Norm: $expVal_O / $expVal_N")
     expVal = real(expVal_O) / real(expVal_N);
     return expVal;
 
@@ -82,6 +83,7 @@ function twoSiteExpVal_V(pepsTensors, unitCellLayout, CTMRGTensors, twoSiteOpera
     # expVal_O = dot(TNGateL, TNR);
     # println(expVal_O)
     
+    # println("Energy / Norm: $expVal_O / $expVal_N")
     expVal = real(expVal_O) / real(expVal_N);
     return expVal;
 

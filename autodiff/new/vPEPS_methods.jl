@@ -1,6 +1,6 @@
 function optimizePEPS(pepsTensorsVec, unitCellLayout, chiE, truncBelowE, convTolE, maxIter, initMethod, energyTBG)
    
-    optimmethod = LBFGS(m = 10);
+    optimmethod = LBFGS(m = 20);
     optimargs = (Optim.Options(f_tol = 1e-6, show_trace = true), );
     res = nothing;
     let groundStateEnergy = x -> real(computeEnergy(x, unitCellLayout, chiE, truncBelowE, convTolE, maxIter, initMethod, energyTBG))
@@ -13,10 +13,20 @@ end
 
 function computeEnergy(pepsTensorsVec, unitCellLayout, chiE, truncBelowE, convTolE, maxIter, initMethod, energyTBG)
 
+    # normalize pepsTensorsVec
+    # shape = size(pepsTensorsVec)
+    # pepsTensorsVec = reshape([ind < sqrt(truncBelowE) ? 0 : ind for ind in pepsTensorsVec], shape);
+    # normalization = norm(pepsTensorsVec)
+    # println("Norm of PEPS tensors: $normalization")
+    # pepsTensorsVec /= norm(pepsTensorsVec);
+
     # reshape pepsTensor into array of iPEPS tensors
     Lx = size(pepsTensorsVec, 1);
     Ly = size(pepsTensorsVec, 2);
-    pepsTensors = [pepsTensorsVec[idx, idy, :, :, :, :, :] for idx = 1 : Lx, idy = 1 : Ly];
+    # pepsTensors = [pepsTensorsVec[idx, idy, :, :, :, :, :] for idx = 1 : Lx, idy = 1 : Ly];
+    pepsTensors = [pepsTensorsVec[idx, idy, :, :, :, :, :] / norm(pepsTensorsVec[idx, idy, :, :, :, :, :]) for idx = 1 : Lx, idy = 1 : Ly];
+    normalization = norm(pepsTensorsVec)
+    println("Norm of PEPS tensors: $normalization")
     # pepsTensors = pepsTensorsVec;
 
     # run CTMRG
@@ -87,6 +97,10 @@ function initializeC(elementType::DataType, tensorDims::NTuple{5, Int64}, chiE::
     if initMethod == 0
         c = ones(elementType, 1, 1);
     elseif initMethod == 1
+        c = ones(elementType, 1, 1);
+    elseif initMethod == 2
+        c = randn(elementType, 1, 1);
+    elseif initMethod == 3
         c = randn(elementType, chiE, chiE);
     end
     return c
@@ -96,6 +110,10 @@ function initializeT1(elementType::DataType, tensorDims::NTuple{5, Int64}, chiE:
     if initMethod == 0
         T1 = ones(elementType, 1, tensorDims[5], tensorDims[5], 1);
     elseif initMethod == 1
+        T1 = reshape(Matrix{elementType}(I, tensorDims[5], tensorDims[5]), (1, tensorDims[5], tensorDims[5], 1));
+    elseif initMethod == 2
+        T1 = randn(elementType, 1, tensorDims[5], tensorDims[5], 1);
+    elseif initMethod == 3
         T1 = randn(elementType, chiE, tensorDims[5], tensorDims[5], chiE);
     end
     return T1
@@ -105,6 +123,10 @@ function initializeT2(elementType::DataType, tensorDims::NTuple{5, Int64}, chiE:
     if initMethod == 0
         T2 = ones(elementType, tensorDims[4], tensorDims[4], 1, 1);
     elseif initMethod == 1
+        T2 = reshape(Matrix{elementType}(I, tensorDims[4], tensorDims[4]), (tensorDims[4], tensorDims[4], 1, 1));
+    elseif initMethod == 2
+        T2 = randn(elementType, tensorDims[4], tensorDims[4], 1, 1);
+    elseif initMethod == 3
         T2 = randn(elementType, tensorDims[4], tensorDims[4], chiE, chiE);
     end
     return T2
@@ -114,6 +136,10 @@ function initializeT3(elementType::DataType, tensorDims::NTuple{5, Int64}, chiE:
     if initMethod == 0
         T3 = ones(elementType, 1, 1, tensorDims[2], tensorDims[2]);
     elseif initMethod == 1
+        T3 = reshape(Matrix{elementType}(I, tensorDims[2], tensorDims[2]), (1, 1, tensorDims[2], tensorDims[2]));
+    elseif initMethod == 2
+        T3 = randn(elementType, 1, 1, tensorDims[2], tensorDims[2]);
+    elseif initMethod == 3
         T3 = randn(elementType, chiE, chiE, tensorDims[2], tensorDims[2]);
     end
     return T3
@@ -123,6 +149,10 @@ function initializeT4(elementType::DataType, tensorDims::NTuple{5, Int64}, chiE:
     if initMethod == 0
         T4 = ones(elementType, 1, tensorDims[1], tensorDims[1], 1);
     elseif initMethod == 1
+        T4 = reshape(Matrix{elementType}(I, tensorDims[1], tensorDims[1]), (1, tensorDims[1], tensorDims[1], 1));
+    elseif initMethod == 2
+        T4 = randn(elementType, 1, tensorDims[1], tensorDims[1], 1);
+    elseif initMethod == 3
         T4 = randn(elementType, chiE, tensorDims[1], tensorDims[1], chiE);
     end
     return T4
@@ -132,13 +162,14 @@ end
 function initializeTensors(initFunc, elementType, dimensionsTensors, chiE::Int, initMethod::Int, T, Lx::Int, Ly::Int)
     
     # initialize array with CTM tensors
-    tensorArray = Array{T, 2}([initFunc(elementType, dimensionsTensors[idx, idy], chiE, initMethod) for idx = 1 : Lx, idy = 1 : Ly]);
+    # tensorArray = Array{T, 2}([initFunc(elementType, dimensionsTensors[idx, idy], chiE, initMethod) for idx = 1 : Lx, idy = 1 : Ly]);
+    tensorArray = [initFunc(elementType, dimensionsTensors[idx, idy], chiE, initMethod) for idx = 1 : Lx, idy = 1 : Ly];
     return tensorArray
 
 end
 
 # @Zygote.nograd initializeCTMRGTensors
-function initializeCTMRGTensors(elementType, dimensionsTensors, unitCellLayout, chiE::Int; initMethod::Int = 0)
+function initializeCTMRGTensors(elementType, dimensionsTensors, chiE::Int; initMethod::Int = 0)
 
     # get size
     Lx, Ly = size(dimensionsTensors);

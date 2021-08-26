@@ -45,7 +45,7 @@ function (stopFunc::StopFunction)(stateCTMRG)
 
     diff = norm(newSingularValues .- stopFunc.oldvals)
     # @printf("convergence CTMRG step %d : %0.6e\n", stopFunc.counter, diff)
-    # println("convergence CTMRG: ", diff)
+    println("convergence CTMRG: ", diff)
     diff <= stopFunc.tol && return true
     stopFunc.oldvals = newSingularValues
 
@@ -65,9 +65,10 @@ function fixedPointBackward(f, CTMRGTensors, (iPEPS, unitCellLayout, chiE, trunc
     function backΔ(Δ)
         grad = back2(Δ)[1];
         for g in take(imap(back2, drop(iterated(back1, Δ), 1)), 100)
+            # println(g)
             grad .+= g[1]
             ng = norm(g[1])
-            println(ng)
+            # println(ng)
             if ng < 1e-6
                 println("backprop converged\n")
                 break
@@ -76,6 +77,9 @@ function fixedPointBackward(f, CTMRGTensors, (iPEPS, unitCellLayout, chiE, trunc
                 # try to minimise damage by scaling to small
                 grad ./= norm(grad)
                 grad .*= 1e-4
+                break
+            elseif isnan(ng)
+                println("backprop NaN")
                 break
             end
         end

@@ -12,7 +12,7 @@ function runCTMRG(pepsTensors, unitCellLayout, chiE, truncBelowE, convTolE, maxI
     dimensionsTensors = [size(pepsTensors[idx, idy]) for idx = 1 : Lx, idy = 1 : Ly];
 
     # initialize structs for CTMRG tensors
-    CTMRGTensors = initializeCTMRGTensors(elementType, dimensionsTensors, unitCellLayout, chiE, initMethod = initMethod);
+    CTMRGTensors = initializeCTMRGTensors(elementType, dimensionsTensors, chiE, initMethod = initMethod);
 
     # sinVals = fill(Inf, Lx, Ly, 4 * chiE);
     sinVals = fill(fill(Inf, 4 * chiE), Lx, Ly);
