@@ -20,10 +20,12 @@ module vPEPS
     # make public
     export optimizePEPS
     export computeEnergy
+    export simpleUpdate_iPEPS
 
     include("CTMRG.jl")
     include("customAdjoints.jl")
     include("expectationValues.jl")
+    include("simpleUpdate_iPEPS.jl")
     
     # include optimization methods
     include("vPEPS_methods.jl")

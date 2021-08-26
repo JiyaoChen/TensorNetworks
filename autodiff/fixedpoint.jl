@@ -24,10 +24,10 @@ end
 #     return singularValues;
 # end
 function getSingularValues(C1, C2, C3, C4, idx, idy, chiE)
-    Λ1 = svd(C1[idx, idy]).S;
-    Λ2 = svd(C2[idx, idy]).S;
-    Λ3 = svd(C3[idx, idy]).S;
-    Λ4 = svd(C4[idx, idy]).S;
+    _, Λ1, _ = svd(C1[idx, idy]);
+    _, Λ2, _ = svd(C2[idx, idy]);
+    _, Λ3, _ = svd(C3[idx, idy]);
+    _, Λ4, _ = svd(C4[idx, idy]);
     return vcat(Λ1, zeros(chiE - length(Λ1)), Λ2, zeros(chiE - length(Λ2)), Λ3, zeros(chiE - length(Λ3)), Λ4, zeros(chiE - length(Λ4)));
 end
 
@@ -43,22 +43,9 @@ function (stopFunc::StopFunction)(stateCTMRG)
     C1, C2, C3, C4 = stateCTMRG[[1, 3, 5, 7]];
     newSingularValues = [getSingularValues(C1, C2, C3, C4, idx, idy, chiE) for idx = 1 : Lx, idy = 1 : Ly];
 
-    # newSingularValues = zeros(Float64, Lx, Ly, 4, chiE);
-    # for idx = 1 : Lx, idy = 1 : Ly
-    #     Λ1 = svd(C1[idx, idy]).S;
-    #     Λ2 = svd(C2[idx, idy]).S;
-    #     Λ3 = svd(C3[idx, idy]).S;
-    #     Λ4 = svd(C4[idx, idy]).S;
-    #     newSingularValues[idx, idy, 1, 1 : length(Λ1)] = Λ1;
-    #     newSingularValues[idx, idy, 2, 1 : length(Λ2)] = Λ2;
-    #     newSingularValues[idx, idy, 3, 1 : length(Λ3)] = Λ3;
-    #     newSingularValues[idx, idy, 4, 1 : length(Λ4)] = Λ4;
-    #     # @info Λ1, Λ2, Λ3, Λ4
-    # end
-
     diff = norm(newSingularValues .- stopFunc.oldvals)
     # @printf("convergence CTMRG step %d : %0.6e\n", stopFunc.counter, diff)
-    @show diff
+    println("convergence CTMRG: ", diff)
     diff <= stopFunc.tol && return true
     stopFunc.oldvals = newSingularValues
 
@@ -78,17 +65,21 @@ function fixedPointBackward(f, CTMRGTensors, (iPEPS, unitCellLayout, chiE, trunc
     function backΔ(Δ)
         grad = back2(Δ)[1];
         for g in take(imap(back2, drop(iterated(back1, Δ), 1)), 100)
+            # println(g)
             grad .+= g[1]
             ng = norm(g[1])
-            # ng = norm(grad)
-            if ng < 1e-7
-                # println("backprop converged")
+            # println(ng)
+            if ng < 1e-6
+                println("backprop converged\n")
                 break
             elseif ng > 10
-                println("backprop not converging")
+                println("backprop not converging\n")
                 # try to minimise damage by scaling to small
                 grad ./= norm(grad)
                 grad .*= 1e-4
+                break
+            elseif isnan(ng)
+                println("backprop NaN")
                 break
             end
         end

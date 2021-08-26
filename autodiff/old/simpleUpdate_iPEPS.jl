@@ -289,7 +289,7 @@ function simpleUpdate_iPEPS(Lx, Ly, d, chiB, convTolB, energyTBG; verbosePrint =
     gammaTensors, lambdaTensors = initialize_iPEPS_UnitCell(Lx, Ly, iniBondDim, d, numLinks, lambdaIndexTable);
 
     # maximal number of steps
-    maxNumSteps = Integer(1e3);
+    maxNumSteps = Integer(1e6);
     minIterationsPerGate = 50;
     stepDistanceCheck = 30;
 
