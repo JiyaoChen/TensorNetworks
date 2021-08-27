@@ -1,6 +1,6 @@
 function optimizePEPS(pepsTensorsVec, unitCellLayout, chiE, truncBelowE, convTolE, maxIter, initMethod, energyTBG)
    
-    optimmethod = LBFGS(m = 20);
+    optimmethod = LBFGS(m = 100);
     optimargs = (Optim.Options(f_tol = 1e-6, show_trace = true), );
     res = nothing;
     let groundStateEnergy = x -> real(computeEnergy(x, unitCellLayout, chiE, truncBelowE, convTolE, maxIter, initMethod, energyTBG))

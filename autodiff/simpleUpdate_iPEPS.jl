@@ -362,7 +362,7 @@ function simpleUpdate_iPEPS(Lx, Ly, d, chiB, convTolB, energyTBG; verbosePrint =
 
         # store singular values
         for lambdaIdx = 1 : numLinks
-            singularValues = svd(lambdaTensors[lambdaIdx]).S;
+            _, singularValues, _ = svd(lambdaTensors[lambdaIdx]);
             singularValueTensor[loopCounter,1 .+ (1 : length(singularValues)),lambdaIdx] = singularValues;
         end
 

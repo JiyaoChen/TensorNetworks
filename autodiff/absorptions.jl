@@ -14,7 +14,7 @@ function absorptionStep_L_nonMutating(C1, T1, C2, T2, C3, T3, C4, T4, pepsTensor
     for ucLy = 1 : +1 : unitCellLy
 
         # compute projectore for one column
-        allProjectors = [computeIsometries_LR(C1, T1, C2, T2, C3, T3, C4, T4, pepsTensors, unitCellLayout, chiE, truncBelowE, (ucLx, ucLy), 'L') for ucLx = 1 : unitCellLx];
+        allProjectors = [computeProjectorsL_2(C1, T1, C2, T2, C3, T3, C4, T4, pepsTensors, unitCellLayout, chiE, truncBelowE, (ucLx, ucLy), 'L') for ucLx = 1 : unitCellLx];
         projsUL = [proj[1] for proj in allProjectors];
         projsDL = [proj[2] for proj in allProjectors];
 
@@ -43,7 +43,7 @@ function absorptionStep_U_nonMutating(C1, T1, C2, T2, C3, T3, C4, T4, pepsTensor
     for ucLx = 1 : +1 : unitCellLx
 
         # compute projectore for one row
-        allProjectors = [computeIsometries_UD(C1, T1, C2, T2, C3, T3, C4, T4, pepsTensors, unitCellLayout, chiE, truncBelowE, (ucLx, ucLy), 'U') for ucLy = 1 : unitCellLy];
+        allProjectors = [computeProjectorsU_2(C1, T1, C2, T2, C3, T3, C4, T4, pepsTensors, unitCellLayout, chiE, truncBelowE, (ucLx, ucLy), 'U') for ucLy = 1 : unitCellLy];
         projsUL = [proj[1] for proj in allProjectors];
         projsUR = [proj[2] for proj in allProjectors];
 
@@ -72,9 +72,9 @@ function absorptionStep_R_nonMutating(C1, T1, C2, T2, C3, T3, C4, T4, pepsTensor
     for ucLy = unitCellLy : -1 : 1
 
         # compute projectore for one column
-        allProjectors = [computeIsometries_LR(C1, T1, C2, T2, C3, T3, C4, T4, pepsTensors, unitCellLayout, chiE, truncBelowE, (ucLx, ucLy), 'R') for ucLx = 1 : unitCellLx];
-        projsUR = [proj[3] for proj in allProjectors];
-        projsDR = [proj[4] for proj in allProjectors];
+        allProjectors = [computeProjectorsR_2(C1, T1, C2, T2, C3, T3, C4, T4, pepsTensors, unitCellLayout, chiE, truncBelowE, (ucLx, ucLy), 'R') for ucLx = 1 : unitCellLx];
+        projsUR = [proj[1] for proj in allProjectors];
+        projsDR = [proj[2] for proj in allProjectors];
 
         # make absorption of one column
         absorbedTensorsR = [absorption_R(T1, C2, T2, C3, T3, pepsTensors, unitCellLayout, projsUR, projsDR, (ucLx, ucLy)) for ucLx = 1 : unitCellLx];
@@ -101,9 +101,9 @@ function absorptionStep_D_nonMutating(C1, T1, C2, T2, C3, T3, C4, T4, pepsTensor
     for ucLx = unitCellLx : -1 : 1
 
         # compute projectore for one row
-        allProjectors = [computeIsometries_UD(C1, T1, C2, T2, C3, T3, C4, T4, pepsTensors, unitCellLayout, chiE, truncBelowE, (ucLx, ucLy), 'D') for ucLy = 1 : unitCellLy];
-        projsDL = [proj[3] for proj in allProjectors];
-        projsDR = [proj[4] for proj in allProjectors];
+        allProjectors = [computeProjectorsD_2(C1, T1, C2, T2, C3, T3, C4, T4, pepsTensors, unitCellLayout, chiE, truncBelowE, (ucLx, ucLy), 'D') for ucLy = 1 : unitCellLy];
+        projsDL = [proj[1] for proj in allProjectors];
+        projsDR = [proj[2] for proj in allProjectors];
 
         # make absorption of one row
         absorbedTensorsD = [absorption_D(T2, C3, T3, C4, T4, pepsTensors, unitCellLayout, projsDL, projsDR, (ucLx, ucLy)) for ucLy = 1 : unitCellLy];

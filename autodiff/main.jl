@@ -14,10 +14,10 @@ Base.run(`clear`)
 using OMEinsum
 using Revise
 using vPEPS
-using Profile
-using Zygote
-using LinearAlgebra
-using IterTools: imap, iterated
+# using Profile
+# using Zygote
+# using LinearAlgebra
+# using IterTools: imap, iterated
 
 # include required functions
 include("models.jl")
@@ -30,23 +30,22 @@ Lx = 1;
 Ly = 1;
 unitCellLayout = [1 1 ; 1 1];
 
-# Lx = 2;
-# Ly = 1;
-# unitCellLayout = [1 2 ; 2 1];
-# # unitCellLayout = reshape(collect(1 : Lx * Ly), Lx, Ly)
+Lx = 2;
+Ly = 1;
+unitCellLayout = [1 2 ; 2 1];
 
 # Lx = 2;
 # Ly = 2;
 # unitCellLayout = reshape(collect(1 : Lx * Ly), Lx, Ly);
 
-chiB = 2;
+chiB = 3;
 d = 2;
 
 # CTMRG settings
 initMethod = 1;
 convTolE = 1e-10;
-maxIter = 100;
-chiE = 4;
+maxIter = 50;
+chiE = 8;
 truncBelowE = 1e-8;
 
 # # initialize iPEPS tensors
@@ -90,9 +89,9 @@ truncBelowE = 1e-8;
 # energyTBG = isingTBG(1.0, 0.0, id = 0.0)
 # energyTBG = heisenbergTBG(0.0, 0.0, 0.0, 0.0, id=1.0);
 energyTBG = heisenbergTBG(1.0, 1.0, 1.0, 0.0, id = 0.0);
-energyTBG = ein"aecf, be, fd -> abcd"(energyTBG, σ₁, σ₁');
+# energyTBG = ein"aecf, be, fd -> abcd"(energyTBG, σ₁, σ₁');
 
-initializePEPS = 0; # 0 => randn, 1 => simple update
+initializePEPS = 1; # 0 => randn, 1 => simple update
 if initializePEPS == 0
 
     # initialize pepsTesorsVec
@@ -135,8 +134,12 @@ minPEPS = optimizePEPS(pepsTensorsVec, unitCellLayout, chiE, truncBelowE, convTo
 
 # final objective value
 # Lx = 1, Ly = 1 | array columns: chiB, chiE, gsE
-# energyConv = [2 4 -6.602311e-01];
+# energyConv = [2 4 -6.602311e-01; 2 8 -6.602304e-01];
 
 # final objective value
 # Lx = 2, Ly = 1 | array columns: chiB, chiE, gsE
 # energyConv = [2 2 -6.559741e-01, 2 4 -6.601328e-01, 2 8 -6.562421e-01];
+
+
+# MC comparison
+# E/N = −0.6694421(4)
