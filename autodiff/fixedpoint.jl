@@ -15,14 +15,7 @@ mutable struct StopFunction{T,S}
     chiE::Int
 end
 
-# function getSingularValues(cornerTensors, idx, idy, chiE)
-#     singularValues = zeros(Float64, chiE, 0);
-#     foreach(cornerTensors) do C
-#         singVals = svd(C[idx, idy]).S;
-#         singularValues = hcat(singularValues, vcat(singVals, zeros(chiE - length(singVals))));
-#     end
-#     return singularValues;
-# end
+# @Zygote.nograd getSingularValues
 function getSingularValues(C1, C2, C3, C4, idx, idy, chiE)
     _, Λ1, _ = svd(C1[idx, idy]);
     _, Λ2, _ = svd(C2[idx, idy]);
@@ -43,11 +36,11 @@ function (stopFunc::StopFunction)(stateCTMRG)
     C1, C2, C3, C4 = stateCTMRG[[1, 3, 5, 7]];
     newSingularValues = [getSingularValues(C1, C2, C3, C4, idx, idy, chiE) for idx = 1 : Lx, idy = 1 : Ly];
 
-    diff = norm(newSingularValues .- stopFunc.oldvals)
+    diff = norm(newSingularValues .- stopFunc.oldvals);
     # @printf("convergence CTMRG step %d : %0.6e\n", stopFunc.counter, diff)
-    println("convergence CTMRG: ", diff)
-    diff <= stopFunc.tol && return true
-    stopFunc.oldvals = newSingularValues
+    # println("convergence CTMRG: ", diff)
+    diff <= stopFunc.tol && return true;
+    stopFunc.oldvals = newSingularValues;
 
     return false
 end
@@ -69,11 +62,11 @@ function fixedPointBackward(f, CTMRGTensors, (iPEPS, unitCellLayout, chiE, trunc
             grad .+= g[1]
             ng = norm(g[1])
             # println(ng)
-            if ng < 1e-6
-                println("backprop converged\n")
+            if ng < 1e-7
+                println("backprop converged")
                 break
             elseif ng > 10
-                println("backprop not converging\n")
+                println("backprop not converging")
                 # try to minimise damage by scaling to small
                 grad ./= norm(grad)
                 grad .*= 1e-4

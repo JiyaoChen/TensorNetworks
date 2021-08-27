@@ -39,14 +39,14 @@ unitCellLayout = [1 1 ; 1 1];
 # Ly = 2;
 # unitCellLayout = reshape(collect(1 : Lx * Ly), Lx, Ly);
 
-chiB = 3;
+chiB = 2;
 d = 2;
 
 # CTMRG settings
 initMethod = 1;
-convTolE = 1e-6;
-maxIter = 50;
-chiE = 2;
+convTolE = 1e-10;
+maxIter = 100;
+chiE = 4;
 truncBelowE = 1e-8;
 
 # # initialize iPEPS tensors

@@ -1,4 +1,5 @@
 
+# @Zygote.nograd periodicIndex
 function periodicIndex(idx, arrayLength)
     return mod(idx - 1, arrayLength) + 1;
 end
